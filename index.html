@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Glyphlings: programs that live on their own ($GLYPH)</title>
+<meta name="description" content="Every Solana address hatches a glyphling: a tiny program that prints its own source code and wears it as a body. Hold 5M $GLYPH per glyphling, pair them into kids, and grow your family's share of the hourly pool.">
+<meta name="theme-color" content="#14163a">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" id="fav" href="data:,">
+<style>
+:root{
+  --bg:#f4f5fa;--white:#ffffff;--ink:#14163a;--ink2:#4b4e72;--ink3:#8b8eab;--rule:#dfe1ee;--stage:#0e1133;--stage2:#181c4a;
+  --c1:#ff5a5f;--c2:#1fbf86;--c3:#3a4cf0;--c4:#ffc21a;--c5:#9a4dff;--c6:#10b8c4;--c7:#ff6a2b;--c8:#ee3f97;
+  --display:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;--body:"Instrument Sans",system-ui,-apple-system,sans-serif;--code:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:76px}
+body{background:var(--bg);color:var(--ink);font:400 17px/1.55 var(--body);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+a{color:inherit}button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--c4);outline-offset:2px}
+::selection{background:var(--c4);color:var(--ink)}
+.skip{position:fixed;left:8px;top:-60px;z-index:300;background:#fff;padding:6px 10px}.skip:focus{top:8px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 28px}
+.mono{font-family:var(--code)}
+h1,h2,h3{font-family:var(--display);font-stretch:85%;letter-spacing:-.025em;line-height:.95;font-weight:800}
+h2{font-size:clamp(40px,5.2vw,76px)}
+h3{font-size:26px;line-height:1.05;letter-spacing:-.015em}
+.lede{font-size:19px;line-height:1.55;color:var(--ink2);max-width:58ch;margin-top:16px}
+.small{font-size:14px;color:var(--ink3)}
+
+/* ---------- nav ---------- */
+.top{position:sticky;top:0;z-index:60;background:var(--ink);color:#fff}
+.top .wrap{display:flex;align-items:center;gap:20px;height:64px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+.brand canvas{width:36px;height:36px;border-radius:50%;background:var(--stage)}
+.brand b{font:800 24px/1 var(--display);font-stretch:85%;letter-spacing:-.02em}
+.nav{display:flex;gap:4px;margin-left:12px}
+.nav a{font:500 15px var(--body);text-decoration:none;padding:6px 10px;border-radius:6px;color:#c9cbe6}
+.nav a:hover{color:#fff;background:rgba(255,255,255,.08)}
+.sp{flex:1}
+.ca{display:flex;align-items:center;gap:0;border-radius:8px;background:rgba(255,255,255,.08);font:500 13px var(--code)}
+.ca span{padding:7px 10px;color:#a9acd0}
+.ca code{padding:7px 0;color:#fff}
+.ca button{border:0;background:none;padding:7px 12px;color:var(--c4);font:600 13px var(--body);cursor:pointer}
+.xl{width:38px;height:38px;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.08);text-decoration:none;font-weight:700}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border-radius:10px;border:2px solid var(--ink);background:var(--ink);color:#fff;font:600 16px var(--body);text-decoration:none;cursor:pointer;white-space:nowrap}
+.btn:hover{background:#262a63;border-color:#262a63}
+.btn.line{background:transparent;color:var(--ink)}.btn.line:hover{background:var(--ink);color:#fff}
+.btn.on-dark{background:#fff;color:var(--ink);border-color:#fff}.btn.on-dark:hover{background:var(--c4);border-color:var(--c4)}
+.btn.line.on-dark{background:transparent;color:#fff;border-color:rgba(255,255,255,.4)}.btn.line.on-dark:hover{border-color:#fff;background:rgba(255,255,255,.08)}
+.btn.sun{background:var(--c4);border-color:var(--c4);color:var(--ink)}.btn.sun:hover{background:#ffd34f;border-color:#ffd34f}
+.btn.sm{padding:8px 14px;font-size:14px;border-radius:8px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+/* ---------- hero ---------- */
+.hero{padding:56px 0 64px;background:var(--bg)}
+.hgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);gap:56px;align-items:center}
+.hero h1{font-size:clamp(56px,7.6vw,118px);line-height:.88;font-stretch:78%;letter-spacing:-.035em}
+.hero h1 span{display:block}
+.hero h1 .c{color:var(--c3)}
+.hero .lede{font-size:20px;margin-top:22px;max-width:44ch}
+.hero .lede b{color:var(--ink);font-weight:600}
+.hatch{display:flex;gap:10px;margin-top:28px;max-width:600px}
+.hatch input{flex:1;min-width:0;border:2px solid var(--ink);border-radius:10px;background:#fff;padding:13px 16px;font:500 15px var(--code);outline:0}
+.hatch input:focus{border-color:var(--c3);box-shadow:0 0 0 4px rgba(58,76,240,.18)}
+.hint{font-size:15px;color:var(--ink2);margin-top:12px}
+.hint button{background:none;border:0;color:var(--c3);font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.kin{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+.kin button{display:flex;gap:8px;align-items:center;border:1px solid var(--rule);background:#fff;border-radius:999px;padding:3px 12px 3px 3px;font:500 13px var(--code);cursor:pointer}
+.kin button:hover{border-color:var(--ink)}
+.kin canvas{width:28px;height:28px;border-radius:50%;background:var(--stage)}
+.kin-l{font-size:14px;color:var(--ink3);margin-top:26px}
+
+/* the stage (dark specimen box) */
+.stage{position:relative;background:radial-gradient(90% 70% at 50% 42%,#1c2160 0%,var(--stage) 72%);border-radius:28px;overflow:hidden;color:#e6e8ff}
+.stage canvas.body{display:block;width:100%;aspect-ratio:1/1}
+.stage .tag{position:absolute;left:20px;top:18px;display:flex;gap:8px}
+.stage .tag span{font:500 13px var(--body);padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.1);color:#dfe2ff}
+.stage .tag #hStage{background:var(--c2);color:#06231a;font-weight:600}
+.ticker{position:absolute;right:18px;top:18px;max-width:58%;font:400 13px/1.4 var(--body);color:#b9bde6;text-align:right}
+.tape{display:flex;height:10px;gap:2px;margin:0 22px}
+.tape i{flex:1;border-radius:2px}
+.cap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;padding:18px 22px 22px}
+.cap b{display:block;font:800 30px/1 var(--display);font-stretch:85%;letter-spacing:-.02em;color:#fff}
+.cap .spn{font:600 17px var(--body);margin-top:6px}
+.cap .meta{font:400 14px/1.5 var(--body);color:#9ea3d6;margin-top:4px}
+.cap .r{text-align:right;font:400 13px/1.55 var(--code);color:#c9cdf5}
+.cap .r em{display:block;font:400 12px var(--body);font-style:normal;color:#8a8fc7}
+
+/* ---------- mechanism band (a true sequence) ---------- */
+.band{background:var(--c3);color:#fff;padding:34px 0}
+.steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;list-style:none;counter-reset:s}
+.steps li{position:relative;padding:4px 22px 4px 0;counter-increment:s}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#fff;color:var(--c3);font:800 16px var(--display);margin-bottom:12px}
+.steps li::after{content:"";position:absolute;left:44px;right:12px;top:21px;height:2px;background:rgba(255,255,255,.35)}
+.steps li:last-child::after{display:none}
+.steps b{display:block;font:700 19px/1.15 var(--display);font-stretch:90%}
+.steps span{font-size:15px;color:#d8dcff}
+
+/* ---------- section scaffolding ---------- */
+.sec{padding:110px 0}
+.sec.white{background:#fff}
+.sec.dark{background:var(--ink);color:#e7e9ff}
+.sec.dark .lede{color:#b4b8e0}
+.head{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:40px;align-items:end;margin-bottom:44px}
+.head .lede{margin-top:0}
+.note{display:inline-flex;align-items:center;gap:8px;font:500 14px var(--body);color:#8a5a00;background:#fff3cf;border-radius:999px;padding:5px 12px;margin-top:18px}
+.note::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c4)}
+.sec.dark .note{background:rgba(255,194,26,.14);color:#ffd46b}
+.live{color:#0b6b46;background:#d9f7ea}.live::before{background:var(--c2)}
+
+/* ---------- colony (full bleed) ---------- */
+.colony{position:relative;background:var(--stage)}
+.colony canvas{display:block;width:100%;height:680px;cursor:pointer}
+.chud{position:absolute;left:28px;right:28px;bottom:22px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;pointer-events:none}
+.chud>div{pointer-events:auto;background:rgba(14,17,51,.86);border-radius:12px;padding:10px 14px;color:#cfd3ff;font:400 14px var(--body)}
+.chud b{color:#fff;font:700 18px var(--display);margin:0 4px 0 0}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:22px}
+.legend span{display:flex;gap:8px;align-items:center;font:500 15px var(--body);color:var(--ink2)}
+.legend i{width:12px;height:12px;border-radius:3px}
+
+/* ---------- anatomy (a 4-step sequence) ---------- */
+.anat{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-top:2px solid var(--ink)}
+.ast{padding:22px 22px 26px 0;border-right:1px solid var(--rule);margin-right:22px}
+.ast:last-child{border-right:0;margin-right:0}
+.ast .num{font:800 64px/1 var(--display);font-stretch:80%;color:var(--acc)}
+.ast h3{margin:10px 0 6px}
+.ast p{font-size:15px;color:var(--ink2)}
+.ast pre{font:400 12.5px/1.55 var(--code);white-space:pre-wrap;word-break:break-all;color:var(--ink);background:#fff;border:1px solid var(--rule);border-radius:10px;padding:12px;margin-top:12px;max-height:170px;overflow:auto}
+.ast canvas{display:block;width:100%;aspect-ratio:1/1;border-radius:14px;background:var(--stage);margin-top:12px}
+.gtape{display:flex;gap:2px;height:28px;margin-top:12px}.gtape i{flex:1;border-radius:2px}
+
+/* ---------- quine ---------- */
+.q{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px}
+.qbar{display:flex;justify-content:space-between;gap:12px;margin-bottom:10px;font:500 14px var(--body);color:#9ea3d6}
+.code{background:var(--stage);color:#cdd1f7;border-radius:16px;padding:20px;font:400 13px/1.65 var(--code);white-space:pre-wrap;word-break:break-all;max-height:420px;overflow:auto}
+.code .s{color:#ffd27a}.code .n{color:#6ff0d9}.code .p{color:#6c72ad}.code .kw{color:#a6c8ff;font-weight:500}
+.verdict{display:flex;gap:14px;align-items:center;padding:18px 20px;border-radius:14px;background:var(--c2);color:#05271b;font:600 17px var(--body)}
+.verdict.bad{background:var(--c1);color:#fff}
+.verdict .big{font:800 40px/1 var(--display)}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 18px;font:400 14px var(--code)}
+.kv span{color:var(--ink3);font-family:var(--body)}
+.kv b{font-weight:500;word-break:break-all}
+.sec.dark .kv span{color:#8f94c9}
+.panel{background:var(--stage2);border-radius:16px;padding:20px}
+.plain{background:#fff;border:1px solid var(--rule);border-radius:16px;padding:24px}
+
+/* ---------- wallets ---------- */
+.form{display:flex;gap:10px;flex-wrap:wrap}
+.inp{flex:1;min-width:200px;border:2px solid var(--rule);border-radius:10px;background:#fff;padding:12px 14px;font:500 15px var(--code);outline:0}
+.inp:focus{border-color:var(--c3)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-top:26px;border-top:2px solid var(--ink)}
+.stat{padding:16px 18px 6px 0}
+.stat .k{font:500 14px var(--body);color:var(--ink3)}
+.stat .v{font:800 44px/1 var(--display);font-stretch:85%;letter-spacing:-.02em;margin-top:6px;color:var(--acc,var(--ink))}
+.stat small{font-size:13px;color:var(--ink3)}
+.sec.dark .stat .k{color:#9ea3d6}
+.lings{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-top:22px}
+.ling{background:var(--stage);border-radius:14px;padding:8px 8px 12px;color:#e2e5ff;cursor:pointer;border:2px solid transparent;text-align:left}
+.ling canvas{width:100%;aspect-ratio:1/1;display:block}
+.ling b{display:block;font:600 14px var(--body);padding:2px 6px 0}
+.ling small{display:block;font:500 12px var(--body);padding:0 6px;color:var(--acc)}
+.ling:hover{border-color:var(--acc,#fff)}
+
+/* ---------- kids ---------- */
+.breed{display:grid;grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr) 56px minmax(0,1.25fr);gap:14px;align-items:center}
+.bslot{background:var(--stage);border-radius:20px;padding:12px;color:#e2e5ff}
+.bslot canvas{width:100%;aspect-ratio:1/1;display:block}
+.bslot .inp{width:100%;min-width:0;margin-top:8px;background:var(--stage2);border-color:#2b3170;color:#fff;font-size:13px;padding:10px 12px}
+.bslot.kid{background:linear-gradient(160deg,#2a1858,var(--stage))}
+.bslot b{display:block;font:700 20px var(--display);padding:4px 4px 0}.bslot small{display:block;font:500 14px var(--body);color:#c6b4ff;padding:0 4px 4px}
+.op{font:800 56px var(--display);text-align:center;color:var(--ink3)}
+
+/* ---------- species poster grid ---------- */
+.sgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.spc{background:var(--acc);border-radius:20px;padding:12px 12px 18px;color:var(--tx,#fff);display:flex;flex-direction:column}
+.spc canvas{display:block;width:100%;aspect-ratio:1/1;border-radius:12px;background:var(--stage);cursor:pointer}
+.spc h3{font-size:25px;margin:16px 6px 2px;font-style:italic;font-stretch:90%}
+.spc .mech{font:500 14px var(--body);opacity:.82;padding:0 6px}
+.spc code{display:block;font:400 12px/1.5 var(--code);background:rgba(0,0,0,.16);border-radius:8px;padding:7px 9px;margin:12px 6px 0}
+.spc p{font-size:14px;line-height:1.45;margin:10px 6px 0;opacity:.92}
+.spc .nums{display:flex;gap:18px;margin:14px 6px 0;font-size:13px;opacity:.9}
+.spc .nums b{display:block;font:800 24px/1 var(--display);opacity:1}
+.mxwrap{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:28px;margin-top:28px}
+.mx{border-collapse:separate;border-spacing:3px;font:500 12px var(--code)}
+.mx td,.mx th{width:44px;height:36px;text-align:center;border-radius:6px}
+.mx th{font:600 12px var(--body)}
+.rules{list-style:none;counter-reset:r;margin-top:12px}
+.rules li{counter-increment:r;display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;padding:9px 0;border-bottom:1px solid var(--rule);font-size:15px}
+.rules li::before{content:counter(r);font:800 18px var(--display);color:var(--ink3)}
+.rules code{font:400 13px var(--code);color:var(--ink2)}
+
+/* ---------- families + hours ---------- */
+.tabs{display:flex;gap:4px;background:var(--bg);border-radius:10px;padding:4px;width:max-content}
+.tabs button{border:0;background:none;border-radius:7px;padding:7px 14px;font:600 14px var(--body);cursor:pointer;color:var(--ink2)}
+.tabs button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(20,22,58,.12)}
+.sec.dark .tabs{background:var(--stage2)}.sec.dark .tabs button{color:#b4b8e0}.sec.dark .tabs button[aria-pressed="true"]{background:#fff;color:var(--ink)}
+table.t{width:100%;border-collapse:collapse;font-size:15px}
+table.t th{font:500 13px var(--body);color:var(--ink3);text-align:left;padding:10px;border-bottom:2px solid var(--ink)}
+table.t td{padding:12px 10px;border-bottom:1px solid var(--rule);vertical-align:middle}
+table.t tr.click{cursor:pointer}table.t tr.click:hover td{background:var(--bg)}
+table.t tr.sel td{background:#eceeff}
+.rank{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;font:800 15px var(--display);color:#fff}
+.poolv{font:800 56px/1 var(--display);font-stretch:85%;letter-spacing:-.02em}
+.meter{height:10px;border-radius:99px;background:var(--bg);overflow:hidden;margin-top:14px}.meter i{display:block;height:100%;background:var(--c3)}
+.chart{width:100%;height:260px;display:block}
+.f2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px}
+
+/* ---------- log ---------- */
+.feed{display:flex;flex-direction:column;max-height:620px;overflow:auto;border-top:2px solid var(--ink)}
+.ev{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:16px;align-items:center;padding:12px 0;border-bottom:1px solid var(--rule);font-size:15px}
+.ev canvas{width:52px;height:52px;border-radius:12px;background:var(--stage)}
+.ev .ty{display:inline-block;font:600 12px var(--body);padding:2px 9px;border-radius:999px;color:#fff;margin-right:6px}
+.ev small{color:var(--ink3);font-size:13px}
+
+/* ---------- verify ---------- */
+.v2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
+.founders{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+
+/* ---------- token + faq ---------- */
+.tok{background:var(--c4);border-radius:28px;padding:48px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center}
+.tok h2{font-size:clamp(48px,6vw,90px)}
+.tok .lede{color:#4a3a00}
+.tok .inp{border-color:var(--ink);background:#fffbe9}
+.facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 24px;margin-top:24px;border-top:2px solid var(--ink)}
+.facts div{padding:10px 0;border-bottom:1px solid rgba(20,22,58,.18)}
+.facts dt{font-size:14px;color:#5a4a10}
+.facts dd{font:800 24px/1.1 var(--display);font-stretch:88%;letter-spacing:-.01em}
+.faq details{border-bottom:1px solid var(--rule);padding:18px 0}
+.faq summary{cursor:pointer;font:700 21px/1.2 var(--display);font-stretch:90%;list-style:none;display:flex;justify-content:space-between;gap:12px}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font:500 26px/1 var(--body);color:var(--c3)}.faq details[open] summary::after{content:"–"}
+.faq p{color:var(--ink2);margin-top:10px;max-width:62ch}
+footer{background:var(--ink);color:#a9acd0;padding:56px 0 60px;font-size:14px}
+footer b{font:800 30px var(--display);font-stretch:85%;color:#fff}
+
+/* ---------- modal + toast ---------- */
+.ov{position:fixed;inset:0;z-index:120;background:rgba(14,17,51,.7);display:none;align-items:flex-start;justify-content:center;padding:64px 16px 20px;overflow:auto}
+.ov.on{display:flex}
+.modal{width:min(1020px,100%);background:#fff;border-radius:28px;overflow:hidden;position:relative;animation:pop .22s ease-out}
+@keyframes pop{from{transform:translateY(10px) scale(.98);opacity:0}}
+.modal .x{position:absolute;right:14px;top:14px;z-index:2;width:40px;height:40px;border-radius:50%;border:0;background:var(--bg);font-size:22px;cursor:pointer}
+.mgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.mgrid .stage{border-radius:0}
+#toast{position:fixed;left:50%;bottom:22px;z-index:200;transform:translate(-50%,14px);opacity:0;pointer-events:none;transition:.22s;background:var(--ink);color:#fff;padding:12px 20px;border-radius:12px;font:500 15px var(--body);width:max-content;max-width:92vw;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- hero load sequence (the one orchestrated moment) ---------- */
+.hero h1 span,.hero .lede,.hatch,.hint{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+.hero h1 span:nth-child(2){animation-delay:.08s}.hero h1 span:nth-child(3){animation-delay:.16s}.hero .lede{animation-delay:.26s}.hatch{animation-delay:.34s}.hint{animation-delay:.4s}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}}
+
+@media (max-width:1100px){.nav{display:none}.hgrid,.head,.q,.f2,.v2,.mgrid,.mxwrap,.tok{grid-template-columns:minmax(0,1fr)}.anat{grid-template-columns:repeat(2,minmax(0,1fr))}.ast:nth-child(2){border-right:0;margin-right:0}.sgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.lings{grid-template-columns:repeat(4,minmax(0,1fr))}.steps{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:22px}.steps li::after{display:none}.breed{grid-template-columns:minmax(0,1fr) 36px minmax(0,1fr)}.breed .op.eq{grid-column:1/-1;line-height:.6}.breed .bslot.kid{grid-column:1/-1;max-width:420px;width:100%;margin:0 auto}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.wrap{padding:0 18px}.ca code{display:none}.tabs{width:auto;flex-wrap:wrap}.hero{padding-top:30px}.hatch{flex-direction:column}.anat{grid-template-columns:minmax(0,1fr)}.ast{border-right:0;margin-right:0;border-bottom:1px solid var(--rule)}.sgrid{grid-template-columns:minmax(0,1fr)}.lings{grid-template-columns:repeat(3,minmax(0,1fr))}.steps{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.colony canvas{height:520px}.sec{padding:76px 0}.ticker{display:none}.hm{display:none}.tok{padding:28px;border-radius:22px}.cap{grid-template-columns:minmax(0,1fr)}.cap .r{text-align:left}.founders{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top"><div class="wrap">
+  <a class="brand" href="#top" aria-label="Glyphlings home"><canvas id="logo" width="72" height="72"></canvas><b>glyphlings</b></a>
+  <nav class="nav" aria-label="Sections"><a href="#colony">Colony</a><a href="#species">Species</a><a href="#families">Families</a><a href="#hours">Hours</a><a href="#log">Log</a><a href="#source">Source</a><a href="#rebuild">Rebuild</a></nav>
+  <span class="sp"></span>
+  <a class="xl" id="xTop" href="#" aria-label="Glyphlings on X">𝕏</a>
+</div></header>
+
+<main id="main">
+<section class="hero" id="top">
+  <div class="wrap hgrid">
+    <div>
+      <h1><span>Programs</span><span>that live</span><span class="c">on their own.</span></h1>
+      <p class="lede">Every Solana address hatches a <b>glyphling</b>: a tiny program that prints its own source code and wears it as a body. Hold <b>5M $GLYPH</b>, which is 0.5% of the 1B supply, and one of them comes alive.</p>
+      <form class="hatch" id="addrF" autocomplete="off"><input id="addrIn" placeholder="Paste any Solana address" aria-label="Solana address" spellcheck="false"><button class="btn" type="submit">Hatch it</button></form>
+      <p class="hint">Every address already has one. <button type="button" id="randB">Hatch a random address</button></p>
+      <p class="kin-l" id="kinL" hidden>Hatched on this visit</p>
+      <div class="kin" id="kin" aria-label="Recently hatched"></div>
+    </div>
+    <div class="stage" id="heroBox">
+      <div class="tag"><span id="hStage">reading</span><span id="hGen">gen 0</span></div>
+      <div class="ticker" id="hTick"></div>
+      <canvas class="body" id="hero" width="760" height="760" aria-label="An animated glyphling, drawn with the characters of its own program"></canvas>
+      <div class="tape" id="hTape" title="Genome: the 32 bytes of sha256(address)"></div>
+      <div class="cap"><div><b id="hName">…</b><div class="spn" id="hSp">…</div><div class="meta" id="hShare"></div></div><div class="r"><em>sha256</em><span id="hSha">…</span><em style="margin-top:8px">thought</em><span id="hTh" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">…</span></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="band"><div class="wrap"><ol class="steps">
+  <li><b>Hold 5M $GLYPH</b><span>0.5% of the 1B pump.fun supply hatches one glyphling.</span></li>
+  <li><b>It copies hourly</b><span>The copy must hash to the same sha256.</span></li>
+  <li><b>Pair with another</b><span>Gene A + gene B makes a kid in one transaction.</span></li>
+  <li><b>Your family grows</b><span>Glyphlings plus living kids.</span></li>
+  <li><b>Get paid hourly</b><span>50% of the pump.fun creator fees, in SOL, split by family size.</span></li>
+</ol></div></div>
+
+<section class="sec white" id="colony" style="padding-bottom:0">
+  <div class="wrap head"><div><h2>The colony</h2></div><p class="lede">Every living glyphling roams one of nine meadows, with pink threads linking kids to their parents. It starts empty and fills as wallets reach 5M $GLYPH.</p></div>
+  <div class="colony"><canvas id="col" width="1280" height="680" aria-label="The colony: nine meadows of glyphlings"></canvas>
+    <div class="chud"><div><b id="cAlive">0</b> alive &nbsp; <b id="cKids">0</b> kids &nbsp; <b id="cFam">0</b> families &nbsp; <b id="cGen">0</b> generations deep &nbsp; <span style="opacity:.75">200 glyphlings max</span></div><div id="cLast"></div></div></div>
+  <div class="wrap" style="padding-bottom:90px"><div class="legend" id="legend"></div></div>
+</section>
+
+<section class="sec" id="anatomy">
+  <div class="wrap">
+    <div class="head"><h2>From an address to a living thing</h2><p class="lede">Nothing is stored and nothing is random. Hash the address, read the hash as genes, and the same creature grows every time, on any computer.</p></div>
+    <div class="anat" id="anat"></div>
+  </div>
+</section>
+
+<section class="sec dark" id="prints">
+  <div class="wrap">
+    <div class="head"><h2>It prints itself</h2><p class="lede">A quine is a program whose output is its own full source. Run any glyphling in a clean interpreter with no globals and a 64-step limit, then compare the two.</p></div>
+    <div class="q">
+      <div><div class="qbar"><span id="pName">program</span><span id="pBytes"></span></div><div class="code" id="pSrc"></div></div>
+      <div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn on-dark" type="button" id="runB">Run the program</button><button class="btn line on-dark" type="button" id="copyRun">Copy a check for your console</button></div>
+        <div id="pOut" style="margin-top:20px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec white" id="wallets">
+  <div class="wrap">
+    <div class="head"><h2>Every 5M you hold is one glyphling</h2><p class="lede">Glyphling #1 is your address and #2 is <span class="mono">address:2</span>, and so on up. Buy past the next 5M and another is born. Drop below it and the newest one returns to the code. With 1B tokens in total, there can never be more than 200.</p></div>
+    <form class="form" id="wF" autocomplete="off"><input class="inp" id="wIn" placeholder="Wallet address" aria-label="Wallet address" spellcheck="false"><input class="inp" id="wBag" type="number" min="0" max="1000000000" step="1000000" placeholder="$GLYPH held" aria-label="$GLYPH held" style="max-width:220px;flex:0 1 220px"><button class="btn" type="submit">Show glyphlings</button></form>
+    <p class="hint" id="wNote">Balances load from the chain once the $GLYPH contract is live. Until then, type an amount.</p>
+    <div id="wOut"></div>
+  </div>
+</section>
+
+<section class="sec" id="breed">
+  <div class="wrap">
+    <div class="head"><h2>Two glyphlings make a kid</h2><p class="lede">A kid takes gene A from one parent and gene B from the other, so two species can make a hybrid. It counts toward both parents' families while it lives.</p></div>
+    <div class="breed">
+      <div class="bslot"><canvas id="bA" width="320" height="320"></canvas><input class="inp" id="bAin" placeholder="Parent A address" aria-label="Parent A address" spellcheck="false"></div>
+      <div class="op" aria-hidden="true">+</div>
+      <div class="bslot"><canvas id="bB" width="320" height="320"></canvas><input class="inp" id="bBin" placeholder="Parent B address" aria-label="Parent B address" spellcheck="false"></div>
+      <div class="op eq" aria-hidden="true">=</div>
+      <div class="bslot kid"><canvas id="bK" width="380" height="380"></canvas><b id="bKn">Kid</b><small id="bKs">Pick two parents</small></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:24px"><button class="btn" type="button" id="bGo">Pair them</button><button class="btn line" type="button" id="bNonce">Try another kid</button><button class="btn line" type="button" id="bRand">Random parents</button></div>
+  </div>
+</section>
+
+<section class="sec white" id="species">
+  <div class="wrap">
+    <div class="head"><div><h2>Eight species, one rule each</h2><span class="note live" id="spSample">Measuring species shares…</span></div><p class="lede">A glyphling's species comes from the shape of its thought: how deep it goes, how it forks, whether it checks first or acts on the world. The first rule that fits decides.</p></div>
+    <div class="sgrid" id="spGrid"></div>
+    <div class="mxwrap">
+      <div><h3>Hybrids</h3><p class="small" style="margin:6px 0 14px">Kids born from each pairing of species in the colony.</p><div style="overflow:auto"><table class="mx" id="mx"></table></div></div>
+      <div><h3>The rules, in order</h3><ol class="rules" id="rules"></ol></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="families">
+  <div class="wrap">
+    <div class="head"><div><h2>Bigger family, bigger share</h2></div><p class="lede">A family is one wallet's glyphlings plus its living kids. Each hour, half of the creator fees pump.fun pays out on $GLYPH trades go into a SOL pool, split across families by size.</p></div>
+    <div class="f2">
+      <div class="plain">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div class="tabs" id="fTabs"><button type="button" aria-pressed="true" data-s="size">Size</button><button type="button" aria-pressed="false" data-s="earned">Earned</button><button type="button" aria-pressed="false" data-s="age">Oldest</button></div><span class="small" id="fCount"></span></div>
+        <table class="t" style="margin-top:14px"><thead><tr><th>Rank</th><th>Wallet</th><th>Family</th><th class="hm">Earned</th></tr></thead><tbody id="fBody"></tbody></table>
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:14px"><button class="btn line sm" type="button" id="fPrev">Previous</button><span class="small" id="fPage"></span><button class="btn line sm" type="button" id="fNext">Next</button></div>
+      </div>
+      <div>
+        <div class="plain" id="fDetail"></div>
+        <div class="plain" style="margin-top:16px"><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><div><p class="small">Pool this hour</p><div class="poolv" id="poolV">0 SOL</div><p class="small" id="poolS"></p></div><div style="text-align:right"><p class="small">Next payout</p><b id="poolT" style="font:700 20px var(--display)"></b></div></div><div class="meter"><i id="poolM" style="width:0"></i></div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:18px"><label for="calcN" style="font-weight:600">If your family had</label><input class="inp" id="calcN" type="number" min="0" value="3" style="max-width:96px;flex:0 0 96px;min-width:0"><span>members:</span><b id="calcO"></b></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec white" id="hours">
+  <div class="wrap">
+    <div class="head"><div><h2>Every hour, every copy is checked</h2></div><p class="lede">On the hour each glyphling runs and copies itself. A copy only counts if it hashes to the same sha256. Your browser re-runs that check for the whole colony.</p></div>
+    <div class="stats" id="hStats"></div>
+    <div style="margin-top:34px"><canvas class="chart" id="hChart" width="1240" height="260" aria-label="Pool per hour and copies checked"></canvas></div>
+  </div>
+</section>
+
+<section class="sec" id="log">
+  <div class="wrap">
+    <div class="head"><div><h2>Colony log</h2></div><div><p class="lede" style="margin-bottom:18px">Births, kids, returns and comebacks, newest first.</p><div class="tabs" id="lTabs"><button type="button" aria-pressed="true" data-t="all">All</button><button type="button" aria-pressed="false" data-t="born">Born</button><button type="button" aria-pressed="false" data-t="child">Kids</button><button type="button" aria-pressed="false" data-t="returned">Returned</button><button type="button" aria-pressed="false" data-t="came_back">Came back</button></div></div></div>
+    <div class="feed" id="feed"></div>
+  </div>
+</section>
+
+<section class="sec dark" id="source">
+  <div class="wrap">
+    <div class="head"><h2>The source is on this page</h2><p class="lede">The generator and the interpreter run in your browser, not on a server. Read them here, then rebuild any glyphling below and check the hash yourself.</p></div>
+    <div class="v2">
+      <div><h3 style="margin-bottom:12px">Generator</h3><div class="code" id="genSpec"></div><h3 style="margin:28px 0 12px">The eight founders</h3><div class="founders lings" id="founders" style="margin-top:0"></div></div>
+      <div><h3 style="margin-bottom:12px">Interpreter</h3><div class="code" id="interp" style="max-height:720px"></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec white" id="rebuild">
+  <div class="wrap">
+    <div class="head"><h2>Rebuild it yourself</h2><p class="lede">Paste an input (an address, or address:k) and the sha256 you were shown. Glyphlings grows it again from nothing and tells you whether it matches.</p></div>
+    <div class="v2">
+      <div><form id="rbF" autocomplete="off"><label for="rbIn" style="font-weight:600">Input</label><input class="inp" id="rbIn" style="width:100%;margin:6px 0 16px" placeholder="address or address:k" spellcheck="false"><label for="rbSha" style="font-weight:600">Expected sha256 <span class="small">(optional)</span></label><input class="inp" id="rbSha" style="width:100%;margin:6px 0 16px" placeholder="64 hex characters" spellcheck="false"><button class="btn" type="submit">Rebuild and compare</button></form><div id="rbOut" style="margin-top:24px"></div></div>
+      <div class="stage"><canvas class="body" id="rbC" width="640" height="640" aria-label="The rebuilt glyphling"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec" id="token">
+  <div class="wrap">
+    <div class="tok">
+      <div><h2>$GLYPH</h2><p class="lede">A standard pump.fun launch. 5M $GLYPH hatches one glyphling, and half of the creator fees flow back to families every hour.</p>
+        <dl class="facts">
+          <div><dt>Total supply</dt><dd>1,000,000,000</dd></div>
+          <div><dt>Decimals</dt><dd>6</dd></div>
+          <div><dt>Per glyphling</dt><dd>5,000,000 (0.5%)</dd></div>
+          <div><dt>Most glyphlings possible</dt><dd>200</dd></div>
+          <div><dt>Sold on the bonding curve</dt><dd>about 800M</dd></div>
+          <div><dt>Seeds PumpSwap at graduation</dt><dd>about 200M</dd></div>
+        </dl></div>
+      <div><h3>The contract address is posted on X</h3><p style="margin:8px 0 18px;color:#4a3a00">Only copy it from our official account. $GLYPH launches on pump.fun and moves to PumpSwap when the bonding curve fills.</p><a class="btn" id="xCA" href="#">Get the CA on X</a>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px"><a class="btn" id="buyA" href="#">Buy $GLYPH</a><a class="btn line" id="chA" href="#">Open chart</a></div></div>
+    </div>
+    <div class="faq" id="faq" style="margin-top:90px;max-width:860px"></div>
+  </div>
+</section>
+</main>
+
+<footer><div class="wrap" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:40px"><div><b>glyphlings</b><p style="margin-top:8px">Programs that live on their own. $GLYPH on Solana.</p><p style="margin-top:10px"><a id="xF" href="#" style="color:#fff;font-weight:600">@Glyphlings on X</a></p></div><p>Glyphlings is an independent project and is not affiliated with Quinelings. The contract address is only posted on our official X account. Bodies, thoughts and programs are generated in your browser from sha256 of the input, and anyone can rebuild them. Payouts depend on fees actually earned and aren't guaranteed. Memecoins are extremely risky, and nothing here is financial advice.</p></div></footer>
+
+<div class="ov" id="ov" role="dialog" aria-modal="true" aria-labelledby="mName"><div class="modal"><button class="x" type="button" id="mX" aria-label="Close">×</button><div class="mgrid"><div class="stage"><canvas class="body" id="mC" width="660" height="660"></canvas><div class="tape" id="mTape"></div><div style="height:22px"></div></div><div style="padding:34px 30px" id="mBody"></div></div></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+/* ===================== GLYPHLINGS CORE =====================
+   input string -> sha256 -> genome -> thought -> program (a real quine) -> body
+   Everything here is deterministic and runs in the browser.            */
+var G=(function(){
+'use strict';
+/* ---------- sha256 (compact, pure JS) ---------- */
+var K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+function utf8(s){return unescape(encodeURIComponent(s))}
+function sha256(str){var s=utf8(str),l=s.length,i,j;var words=[];for(i=0;i<l;i++)words[i>>2]|=(s.charCodeAt(i)&255)<<(24-(i%4)*8);words[l>>2]|=0x80<<(24-(l%4)*8);var nb=((l+8)>>6)+1;words[nb*16-1]=l*8;for(i=0;i<nb*16;i++)words[i]=words[i]|0;
+  var H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19],w=new Array(64);
+  for(i=0;i<nb;i++){for(j=0;j<16;j++)w[j]=words[i*16+j];for(j=16;j<64;j++){var a=w[j-15],b=w[j-2];var s0=((a>>>7)|(a<<25))^((a>>>18)|(a<<14))^(a>>>3),s1=((b>>>17)|(b<<15))^((b>>>19)|(b<<13))^(b>>>10);w[j]=(w[j-16]+s0+w[j-7]+s1)|0}
+    var A=H[0],B=H[1],C=H[2],D=H[3],E=H[4],F=H[5],Gg=H[6],Hh=H[7];
+    for(j=0;j<64;j++){var S1=((E>>>6)|(E<<26))^((E>>>11)|(E<<21))^((E>>>25)|(E<<7)),ch=(E&F)^(~E&Gg),t1=(Hh+S1+ch+K[j]+w[j])|0,S0=((A>>>2)|(A<<30))^((A>>>13)|(A<<19))^((A>>>22)|(A<<10)),mj=(A&B)^(A&C)^(B&C),t2=(S0+mj)|0;Hh=Gg;Gg=F;F=E;E=(D+t1)|0;D=C;C=B;B=A;A=(t1+t2)|0}
+    H[0]=(H[0]+A)|0;H[1]=(H[1]+B)|0;H[2]=(H[2]+C)|0;H[3]=(H[3]+D)|0;H[4]=(H[4]+E)|0;H[5]=(H[5]+F)|0;H[6]=(H[6]+Gg)|0;H[7]=(H[7]+Hh)|0}
+  return H.map(function(v){return ('00000000'+(v>>>0).toString(16)).slice(-8)}).join('')}
+function bytes(hex){var b=[];for(var i=0;i<hex.length;i+=2)b.push(parseInt(hex.substr(i,2),16));return b}
+function rng(hex){var b=bytes(hex),a=(b[0]|b[1]<<8|b[2]<<16|b[3]<<24)>>>0||1,c=(b[4]|b[5]<<8|b[6]<<16|b[7]<<24)>>>0||7,d=(b[8]|b[9]<<8|b[10]<<16|b[11]<<24)>>>0||13,e=(b[12]|b[13]<<8|b[14]<<16|b[15]<<24)>>>0||29;
+  return function(){var t=a^(a<<11);a=c;c=d;d=e;e=(e^(e>>>19))^(t^(t>>>8));return (e>>>0)/4294967296}}
+
+/* ---------- the eight species ---------- */
+var SPECIES=[
+ {key:'velaria',bin:'Velaria cliffordi',mech:'clifford-veil',rule:'t.guards > 0',col:['#ff5a5f','#ffb26b','#fff1c1'],hex:'#ff5a5f',blurb:'A drifting veil. Its thoughts always check before they act.'},
+ {key:'arbor',bin:'Arbor ramosa',mech:'affine-branch',rule:'t.effects == 0 && t.fanout >= 2 && p.branch',col:['#34c27a','#a6f06b','#f4ffd0'],hex:'#2fb874',blurb:'Grows like a tree. Every thought forks into branches.'},
+ {key:'papilio',bin:'Papilio lorenzi',mech:'lorenz-wing',rule:'t.effects == 0 && t.fanout <= 1 && t.depth >= 4 && p.fold',col:['#5b7cff','#9ad7ff','#f0f6ff'],hex:'#4f6dfa',blurb:'Two wings around a strange attractor. Patient, deep, folded.'},
+ {key:'plexa',bin:'Plexa torta',mech:'pleated-braid',rule:'t.fanout >= 2',col:['#ffb020','#ffe27a','#fff8e0'],hex:'#f2a516',blurb:'Three strands braided tight. Thinks in parallel.'},
+ {key:'cometa',bin:'Cometa juliae',mech:'julia-tail',rule:'t.effects > 0',col:['#c45bff','#ff8ad8','#ffe6fb'],hex:'#b54df0',blurb:'A comet with a fractal tail. The only species that touches the world.'},
+ {key:'anulus',bin:'Anulus nexus',mech:'torus-knot',rule:'t.converge >= 2',col:['#14c3c3','#7cf2e0','#e6fffb'],hex:'#10b3b3',blurb:'A ring tied in a knot. Its answers keep returning to agreement.'},
+ {key:'nautilus',bin:'Nautilus aureus',mech:'golden-mantle',rule:'t.depth >= 3',col:['#ff7a2f','#ffc86b','#fff0dc'],hex:'#f06a20',blurb:'A golden shell that grows by the same ratio forever.'},
+ {key:'floretta',bin:'Floretta fibonacci',mech:'phyllotaxis-bloom',rule:'otherwise',col:['#ff4fa0','#ffb0d6','#fff0f7'],hex:'#f0458f',blurb:'A sunflower head. Seeds placed at the golden angle.'}
+];
+
+/* ---------- thought templates (pure, side-effect free unless "emit") ---------- */
+var WORDS=['alive','ripe','north','open','warm','true','home','seen','safe','near','bright','still'];
+var TEMPLATES=['literal','consensus','evidence','dedupe','sort','mean','max','count','filter','fold','branch','guard','emit'];
+function pick(R,a){return a[Math.floor(R()*a.length)]}
+function thoughtFor(R){var t=pick(R,TEMPLATES),n=2+Math.floor(R()*4),i,arr=[];
+  if(t==='literal'){for(i=0;i<n;i++)arr.push(Math.round(R()*99));return {op:'literal',items:arr,traits:{depth:1,fanout:0,guards:0,effects:0,converge:0,fold:false,branch:false}}}
+  if(t==='consensus'){for(i=0;i<n+1;i++)arr.push({source:String.fromCharCode(97+i),choice:'x'+Math.floor(R()*3)});return {op:'consensus',items:arr,required:2,traits:{depth:2,fanout:1,guards:0,effects:0,converge:2,fold:false,branch:false}}}
+  if(t==='evidence'){var w=pick(R,WORDS);for(i=0;i<n;i++)arr.push({source:String.fromCharCode(97+i),claim:w,value:R()<.6});return {op:'evidence',claim:w,items:arr,traits:{depth:2,fanout:1,guards:0,effects:0,converge:R()<.5?2:1,fold:false,branch:false}}}
+  if(t==='dedupe'||t==='sort'){for(i=0;i<n+2;i++)arr.push(pick(R,WORDS));return {op:t,items:arr,traits:{depth:4,fanout:1,guards:0,effects:0,converge:0,fold:R()<.7,branch:false}}}
+  if(t==='mean'||t==='max'||t==='count'){for(i=0;i<n+1;i++)arr.push(Math.round(R()*500)/10);return {op:t,items:arr,traits:{depth:3+Math.floor(R()*2),fanout:t==='count'?2:1,guards:0,effects:0,converge:0,fold:R()<.5,branch:false}}}
+  if(t==='filter'){for(i=0;i<n+2;i++)arr.push(Math.round(R()*99));var lim=Math.round(R()*60)+20;return {op:'filter',items:arr,below:lim,traits:{depth:3,fanout:2,guards:0,effects:0,converge:0,fold:false,branch:R()<.5}}}
+  if(t==='fold'){for(i=0;i<n+1;i++)arr.push(Math.round(R()*20));return {op:'fold',items:arr,with:pick(R,['add','mul','max']),traits:{depth:4+Math.floor(R()*2),fanout:1,guards:0,effects:0,converge:0,fold:true,branch:false}}}
+  if(t==='branch'){for(i=0;i<n;i++)arr.push(Math.round(R()*99));return {op:'branch',items:arr,pivot:50,traits:{depth:3,fanout:2+Math.floor(R()*2),guards:0,effects:0,converge:0,fold:false,branch:true}}}
+  if(t==='guard'){for(i=0;i<n;i++)arr.push(Math.round(R()*99));return {op:'guard',items:arr,need:Math.round(R()*99),traits:{depth:2,fanout:1,guards:1,effects:0,converge:0,fold:false,branch:false}}}
+  return {op:'emit',say:pick(R,WORDS),times:1+Math.floor(R()*3),traits:{depth:2,fanout:1,guards:0,effects:1,converge:0,fold:false,branch:false}}}
+function speciesOf(tr){if(tr.guards>0)return 0;if(tr.effects===0&&tr.fanout>=2&&tr.branch)return 1;if(tr.effects===0&&tr.fanout<=1&&tr.depth>=4&&tr.fold)return 2;if(tr.fanout>=2)return 3;if(tr.effects>0)return 4;if(tr.converge>=2)return 5;if(tr.depth>=3)return 6;return 7}
+function runThought(th){var it=th.items||[],i;
+  switch(th.op){case 'literal':return it.slice();
+   case 'consensus':{var c={};it.forEach(function(x){c[x.choice]=(c[x.choice]||0)+1});var best=Object.keys(c).sort(function(a,b){return c[b]-c[a]})[0];return [{choice:best,support:c[best],accepted:c[best]>=th.required,uniqueSources:it.length}]}
+   case 'evidence':{var y=it.filter(function(x){return x.value}).length;return [{claim:th.claim,for:y,against:it.length-y,holds:y*2>it.length}]}
+   case 'dedupe':return it.filter(function(x,k){return it.indexOf(x)===k});
+   case 'sort':return it.slice().sort();
+   case 'mean':return [Math.round(it.reduce(function(a,b){return a+b},0)/it.length*100)/100];
+   case 'max':return [Math.max.apply(null,it)];
+   case 'count':return [it.length];
+   case 'filter':return it.filter(function(x){return x<th.below});
+   case 'fold':return [it.reduce(function(a,b){return th.with==='add'?a+b:th.with==='mul'?a*(b||1):Math.max(a,b)},th.with==='mul'?1:0)];
+   case 'branch':return [{low:it.filter(function(x){return x<th.pivot}),high:it.filter(function(x){return x>=th.pivot})}];
+   case 'guard':{var ok=it.some(function(x){return x>=th.need});return [{need:th.need,passed:ok,value:ok?Math.max.apply(null,it):null}]}
+   case 'emit':{var o=[];for(i=0;i<th.times;i++)o.push(th.say);return o}}return []}
+function thoughtText(th){var d=Object.assign({},th);delete d.traits;var op=d.op;delete d.op;return op+' '+JSON.stringify(d.items||d.say||'')+(d.required?' required '+d.required:'')+(d.below?' below '+d.below:'')+(d.with?' with '+d.with:'')+(d.need!=null?' need '+d.need:'')+(d.claim?' claim "'+d.claim+'"':'')+(d.times?' x'+d.times:'')}
+
+/* ---------- design genes (how the body is drawn) ---------- */
+function designFor(R,sp){var round=function(v,p){var f=Math.pow(10,p||3);return Math.round(v*f)/f};
+  return {species:SPECIES[sp].key,mechanism:SPECIES[sp].mech,
+    form:{a:round(R()*2-1),b:round(R()*2-1),c:round(R()*2-1),d:round(R()*2-1),turns:2+Math.floor(R()*4),strands:2+Math.floor(R()*4),tilt:round(R()*.6-.3)},
+    ink:{palette:SPECIES[sp].key,hueShift:round(R()*40-20,1),density:round(.55+R()*.4),glow:round(.2+R()*.6)},
+    motion:{breath:round(.4+R()*.8),drift:round(R()*1.2+.3),phase:round(R()*6.283)},
+    size:{glyphs:700+Math.floor(R()*700),scale:round(.78+R()*.18)}}}
+
+/* ---------- program: a real quine in the Glyph interpreter ---------- */
+function programFor(design,thought){var th=Object.assign({},thought);delete th.traits;
+  var F=['lambda','x',['seq',['task',['quote',design],['quote',th]],['list',['quote','apply'],['var','x'],['list',['quote','quote'],['var','x']]]]];
+  return ['apply',F,['quote',F]]}
+/* a tiny, clean interpreter: no globals, no IO except the task log */
+function interpret(prog){var log=[],ops=0;
+  function ev(e,env){if(++ops>64)throw new Error('op limit');if(!Array.isArray(e))return e;var h=e[0];
+    switch(h){case 'quote':return e[1];
+      case 'var':if(!(e[1] in env))throw new Error('unbound '+e[1]);return env[e[1]];
+      case 'list':return e.slice(1).map(function(x){return ev(x,env)});
+      case 'seq':{var r;for(var i=1;i<e.length;i++)r=ev(e[i],env);return r}
+      case 'lambda':return {params:e[1],body:e[2],env:env};
+      case 'apply':{var f=ev(e[1],env),arg=ev(e[2],env);if(Array.isArray(f)&&f[0]==='lambda')f={params:f[1],body:f[2],env:{}};var ne=Object.assign({},f.env);ne[f.params]=arg;return ev(f.body,ne)}
+      case 'task':{var des=ev(e[1],env),th=ev(e[2],env);log.push({design:des.mechanism,thought:th.op,output:runThought(th)});return null}
+      default:throw new Error('unknown op '+h)}}
+  var out=ev(prog,{});return {output:out,log:log,ops:ops}}
+
+/* ---------- make one glyphling ---------- */
+var CACHE={};
+function make(input){if(CACHE[input])return CACHE[input];var h=sha256(input),R=rng(h);var th=thoughtFor(R),sp=speciesOf(th.traits),des=designFor(R,sp),prog=programFor(des,th),src=JSON.stringify(prog);
+  var g={input:input,sha:h,name:'G-'+input.slice(0,8),species:sp,sp:SPECIES[sp],thought:th,thoughtText:thoughtText(th),design:des,program:prog,source:src,bytes:utf8(src).length,srcSha:sha256(src),genome:bytes(h)};
+  g.output=runThought(th);CACHE[input]=g;return g}
+/* a kid: genes A + B -> new input, species from the stronger trait */
+function breed(a,b,nonce){var input='kid:'+a.sha.slice(0,16)+'x'+b.sha.slice(0,16)+':'+(nonce||0);var k=make(input);
+  var R=rng(sha256(input+':mix')),th=R()<.5?a.thought:b.thought,sp=R()<.5?a.species:b.species;
+  var des=designFor(rng(sha256(input+':d')),sp);des.ink.palette=SPECIES[(R()<.5?a:b).species].key;des.hybrid=[a.sp.key,b.sp.key];
+  var prog=programFor(des,th),src=JSON.stringify(prog);var kid={input:input,sha:sha256(src+input),name:'kid '+sha256(input).slice(0,8),species:sp,sp:SPECIES[sp],thought:th,thoughtText:thoughtText(th),design:des,program:prog,source:src,bytes:utf8(src).length,srcSha:sha256(src),genome:bytes(sha256(input)),parents:[a.input,b.input],hybrid:a.species!==b.species,inkSp:SPECIES.findIndex(function(s){return s.key===des.ink.palette})};
+  kid.output=runThought(th);return kid}
+
+/* ---------- body: points along the species' mechanism ---------- */
+function bodyPoints(g,n){var f=g.design.form,R=rng(g.sha.slice(16)+g.sha.slice(0,16)),P=[],i,x,y,t;n=n||g.design.size.glyphs;
+  switch(g.sp.mech){
+   case 'clifford-veil':{var PR=[[-1.4,1.6,1.0,0.7],[1.7,1.7,0.6,1.2],[-1.7,1.3,-0.1,-1.2],[1.5,-1.8,1.6,0.9],[-1.8,-2.0,-0.5,-0.9],[1.1,-1.32,-1.03,1.54]][(f.strands+f.turns)%6],a=PR[0]+f.a*.06,b=PR[1]+f.b*.06,c=PR[2]+f.c*.05,d=PR[3]+f.d*.05;x=.1;y=.1;for(i=0;i<n+50;i++){var nx=Math.sin(a*y)+c*Math.cos(a*x),ny=Math.sin(b*x)+d*Math.cos(b*y);x=nx;y=ny;if(i>=50)P.push([x,y])}break}
+   case 'affine-branch':{var ang=.42+f.a*.15,shr=.68+f.b*.06;var stack=[[0,1,0,-1,0]];while(P.length<n&&stack.length){var s=stack.shift();var len=Math.pow(shr,s[4])*.55,steps=Math.max(3,Math.round(26*Math.pow(shr,s[4])));for(var k=0;k<steps&&P.length<n;k++){P.push([s[0]+Math.sin(s[2])*len*k/steps,s[1]-Math.cos(s[2])*len*k/steps])}var ex=s[0]+Math.sin(s[2])*len,ey=s[1]-Math.cos(s[2])*len;if(s[4]<8){stack.push([ex,ey,s[2]-ang-f.c*.1,0,s[4]+1]);stack.push([ex,ey,s[2]+ang+f.d*.1,0,s[4]+1]);if(f.strands>3&&s[4]%3===1)stack.push([ex,ey,s[2]+f.tilt,0,s[4]+1])}}break}
+   case 'lorenz-wing':{var sg=10,rh=28+f.a*3,bt=8/3+f.b*.2,dt=.007;x=.1+f.c;y=0;var z=20;for(i=0;i<n*3+200;i++){var dx=sg*(y-x),dy=x*(rh-z)-y,dz=x*y-bt*z;x+=dx*dt;y+=dy*dt;z+=dz*dt;if(i>200&&i%3===0)P.push([x,-z])}break}
+   case 'pleated-braid':{var st=f.strands,tw=f.turns+2;for(i=0;i<n;i++){var u=i/n,s2=i%st;t=u*Math.PI*2*tw;var w=Math.sin(u*Math.PI)*(.8+.2*Math.sin(u*Math.PI*6+f.a*3));P.push([Math.sin(t+s2*Math.PI*2/st)*w,u*2-1+Math.cos(t*2+s2)*.03])}break}
+   case 'julia-tail':{var cr=-.75+f.a*.12,ci=.12+f.b*.1;var zr=.5,zi=.2;for(i=0;i<n+40;i++){var ar=zr-cr,ai=zi-ci,m=Math.sqrt(Math.sqrt(ar*ar+ai*ai)),th2=Math.atan2(ai,ar)/2+(R()<.5?0:Math.PI);zr=m*Math.cos(th2);zi=m*Math.sin(th2);if(i>=40)P.push([zr,zi])}break}
+   case 'torus-knot':{var PQ=[[2,3],[2,5],[3,4],[3,5],[2,7],[3,7]][(f.strands+f.turns)%6],p=PQ[0],q=PQ[1];for(i=0;i<n;i++){t=i/n*Math.PI*2;var r=Math.cos(q*t)+2.2;var X=r*Math.cos(p*t),Y=r*Math.sin(p*t),Z=-Math.sin(q*t);var jt=(R()-.5)*.22;P.push([X+jt*Math.cos(p*t),Y*.86+Z*.5+jt*Math.sin(p*t),Z])}break}
+   case 'golden-mantle':{var bb=.17+f.a*.03,sh=f.strands,T=Math.PI*2*(f.turns+1.5),E=Math.exp(bb*T)-1;for(i=0;i<n;i++){var u2=i/n,sIx=i%sh;t=Math.log(1+u2*E)/bb;var rr=.04*Math.exp(bb*t);var off=1+sIx*.06*(1+Math.sin(t*3));P.push([Math.cos(t)*rr*off,Math.sin(t)*rr*off])}break}
+   default:{var ga=Math.PI*(3-Math.sqrt(5))+f.a*.004;for(i=0;i<n;i++){var rr2=Math.sqrt(i/n),aa=i*ga;var petal=1+.08*Math.sin(aa*f.strands*2+f.b);P.push([Math.cos(aa)*rr2*petal,Math.sin(aa)*rr2*petal])}}}
+  // normalise into [-1,1], keep aspect
+  var mnx=1e9,mxx=-1e9,mny=1e9,mxy=-1e9;P.forEach(function(p){if(p[0]<mnx)mnx=p[0];if(p[0]>mxx)mxx=p[0];if(p[1]<mny)mny=p[1];if(p[1]>mxy)mxy=p[1]});var cx=(mnx+mxx)/2,cy=(mny+mxy)/2,sc=2/Math.max(mxx-mnx,mxy-mny,1e-6);
+  return P.map(function(p){return [(p[0]-cx)*sc,(p[1]-cy)*sc,p[2]||0]})}
+
+/* ---------- drawing ---------- */
+function hexRgb(h){var n=parseInt(h.slice(1),16);return [n>>16,(n>>8)&255,n&255]}
+function mix(a,b,t){return [a[0]+(b[0]-a[0])*t|0,a[1]+(b[1]-a[1])*t|0,a[2]+(b[2]-a[2])*t|0]}
+var PTS={};
+function pointsCached(g){var k=g.sha+':'+g.sp.mech;if(!PTS[k])PTS[k]=bodyPoints(g);return PTS[k]}
+function draw(ctx,g,W,H,t,opt){opt=opt||{};var pts=pointsCached(g),src=g.source,n=pts.length,m=g.design.motion,sc=Math.min(W,H)*.44*g.design.size.scale*(opt.zoom||1),cx=W/2,cy=H/2;
+  var spI=g.inkSp!=null?g.inkSp:g.species,cols=SPECIES[spI].col.map(hexRgb);var fs=opt.font||Math.max(6,Math.round(Math.min(W,H)/46));
+  ctx.font='600 '+fs+'px "IBM Plex Mono",ui-monospace,monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+  var breath=1+Math.sin(t*m.breath+m.phase)*.025,rot=(g.sp.mech==='torus-knot'?t*.12*m.drift:Math.sin(t*.2*m.drift)*.05)+g.design.form.tilt*.3,cr=Math.cos(rot),sr=Math.sin(rot),flow=Math.floor(t*(opt.flow||14));
+  var step=opt.sparse?Math.max(1,Math.round(n/opt.sparse)):1,lim=opt.frac!=null?Math.floor(n*Math.max(0,Math.min(1,opt.frac))):n;
+  for(var i=0;i<lim;i+=step){var p=pts[i],x=p[0],y=p[1];var wob=Math.sin(t*1.3+i*.05)*.012;var X2=(x*cr-y*sr)*breath+wob,Y2=(x*sr+y*cr)*breath;var u=i/n,c=u<.5?mix(cols[0],cols[1],u*2):mix(cols[1],cols[2],(u-.5)*2);
+    var a=(.35+.65*Math.abs(Math.sin(u*Math.PI*3+t*.8)))*g.design.ink.density*(opt.alpha||1);ctx.fillStyle='rgba('+c[0]+','+c[1]+','+c[2]+','+a.toFixed(2)+')';ctx.fillText(src[(i+flow)%src.length],cx+X2*sc,cy+Y2*sc)}}
+return {sha256:sha256,make:make,breed:breed,draw:draw,interpret:interpret,SPECIES:SPECIES,rng:rng,runThought:runThought,bodyPoints:bodyPoints,utf8:utf8}
+})();
+if(typeof module!=='undefined')module.exports=G;
+</script><script>
+(function(){
+'use strict';
+/* =========== CONFIG: edit these =========== */
+var CONFIG={xUrl:'https://x.com/Glyphlings',ca:'',buyUrl:'',chartUrl:'',perGlyphling:5000000,supply:1000000000,
+  // addresses that never hatch glyphlings: the pump.fun bonding curve and the PumpSwap pool. Add them after launch.
+  noGlyphlings:[]};
+/* ========================================== */
+var $=function(s){return document.querySelector(s)},$$=function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+var REDUCE=matchMedia('(prefers-reduced-motion: reduce)').matches,SP=G.SPECIES;
+var tt;function toast(m){var e=$('#toast');e.textContent=m;e.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){e.classList.remove('on')},3000)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function short(a){a=String(a||'');return a.length>12?a.slice(0,4)+'…'+a.slice(-2):a}
+function fmtM(n){n=+n||0;return n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(2)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':String(Math.round(n))}
+function ago(ms){var s=Math.max(0,(Date.now()-ms)/1000);return s<60?Math.round(s)+'s ago':s<3600?Math.round(s/60)+'m ago':Math.round(s/3600)+'h ago'}
+function copy(s){try{navigator.clipboard.writeText(s).then(function(){toast('Copied.')},function(){toast('Copy failed.')})}catch(e){toast('Copy failed.')}}
+var B58=/^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+var ALPH='123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function fakeAddr(R){var s='';for(var i=0;i<44;i++)s+=ALPH[Math.floor(R()*58)];return s}
+function labelOf(g){if(g.founder)return 'Founder '+g.fid.slice(1);if(g.kid)return g.name.replace('kid ','');var p=g.input.split(':');return p[0].slice(0,4)+'#'+(p[1]||1)}
+var SPR={};function sprite(g,size){var k=g.sha+':'+size;if(SPR[k])return SPR[k];var c=document.createElement('canvas');c.width=c.height=size;G.draw(c.getContext('2d'),g,size,size,1.1,{sparse:size<60?160:size<130?320:600,font:Math.max(4,Math.round(size/22))});SPR[k]=c;return c}
+function paintMini(cv,g){var x=cv.getContext('2d');x.clearRect(0,0,cv.width,cv.height);x.drawImage(sprite(g,Math.max(cv.width,48)),0,0,cv.width,cv.height)}
+
+/* ================= SPECIES SHARE (real sampling) ================= */
+var SHARE=SP.map(function(){return 0}),SAMPLED=0;
+(function sample(){var N=2400,i=0;function chunk(){for(var k=0;k<150&&i<N;k++,i++){SHARE[G.make('sample:'+i+':'+fakeAddr(G.rng(G.sha256('s'+i)))).species]++}if(i<N)setTimeout(chunk,0);else{SAMPLED=N;SHARE=SHARE.map(function(c){return c/N*100});renderSpecies();setHeroCap();$('#spSample').textContent='Shares measured over '+N.toLocaleString()+' random addresses'}}chunk()})();
+function pct(sp){return SAMPLED?SHARE[sp].toFixed(1)+'%':'…'}
+
+/* ================= THE PREVIEW COLONY (simulation) ================= */
+var R=G.rng(G.sha256('glyphlings-preview-colony'));
+var NOW=Date.now(),MIN=6e4;
+var FOUNDERS=[];(function(){var got={},n=1;while(FOUNDERS.length<8&&n<500){var g=G.make('glyphlings founder '+n);if(!got[g.species]){got[g.species]=1;g.founder=true;g.fid='f'+(FOUNDERS.length+1);g.gen=0;FOUNDERS.push(g)}n++}FOUNDERS.sort(function(a,b){return a.species-b.species})})();
+var WALLETS=[],LINGS=[],KIDS=[],LOG=[],RETURNED=[];
+for(var w=0;w<0;w++){var addr=fakeAddr(R),bag=CONFIG.perGlyphling*(1+Math.floor(Math.pow(R(),2.2)*9))+R()*4.9e6;var W0={addr:addr,bag:bag,since:NOW-(30+R()*330)*MIN,earned:0,lings:[]};WALLETS.push(W0);var n=Math.floor(bag/CONFIG.perGlyphling);for(var k=1;k<=n;k++){var g=G.make(k===1?addr:addr+':'+k);g.wallet=addr;g.k=k;g.gen=0;g.born=W0.since+k*R()*20*MIN;if(g.born>NOW)g.born=NOW-R()*MIN*10;W0.lings.push(g);LINGS.push(g)}}
+function ev(type,o){o.type=type;o.at=o.at||Date.now();LOG.unshift(o);if(LOG.length>160)LOG.pop()}
+function walletOf(addr){return WALLETS.filter(function(w){return w.addr===addr})[0]}
+function pool(){return LINGS.concat(KIDS)}
+function makeKid(a,b,at){var nonce=Math.floor(R()*1e9);var kid=G.breed(a,b,nonce);kid.kid=true;kid.gen=Math.max(a.gen||0,b.gen||0)+1;kid.born=at;kid.life=(6+R()*26)*MIN;kid.parentsG=[a,b];kid.wallets=[a.wallet,b.wallet].filter(Boolean);KIDS.push(kid);KIDSEVER++;MX[a.species][b.species]++;if(a.species!==b.species)MX[b.species][a.species]++;BORN[kid.species]++;return kid}
+var MX=SP.map(function(){return SP.map(function(){return 0})}),BORN=SP.map(function(){return 0}),KIDSEVER=0;
+pool().forEach(function(g){BORN[g.species]++});
+var HOURS=[];
+function familySize(wa){var w=walletOf(wa);if(!w)return 0;return w.lings.length+KIDS.filter(function(k){return k.wallets.indexOf(wa)>=0}).length}
+function totalFam(){return WALLETS.reduce(function(s,w){return s+familySize(w.addr)},0)}
+var HOUR={n:0,start:0,rate:0};
+function hourSoFar(){return 0}
+// live tick
+function tick(){var now=Date.now(),r=R();
+  KIDS=KIDS.filter(function(k){if(k.born+k.life<now){ev('returned',{g:k,text:'kid '+labelOf(k)+' returned to the code after '+Math.round(k.life/MIN)+' min'});RETURNED.push(k);removeCreature(k);return false}return true});
+  if(r<.55){var all=pool(),a=all[Math.floor(R()*all.length)],b=all[Math.floor(R()*all.length)];if(a!==b){var kid=makeKid(a,b,now);ev('child',{g:kid,text:labelOf(a)+' and '+labelOf(b)+' had kid '+labelOf(kid)+' (gen '+kid.gen+')'});addCreature(kid,true)}}
+  else if(r<.75){var w2=WALLETS[Math.floor(R()*WALLETS.length)];w2.bag+=CONFIG.perGlyphling;var k2=w2.lings.length+1;var g2=G.make(w2.addr+':'+k2);g2.wallet=w2.addr;g2.k=k2;g2.gen=0;g2.born=now;w2.lings.push(g2);LINGS.push(g2);BORN[g2.species]++;ev('born',{g:g2,text:short(w2.addr)+' reached '+fmtM(w2.bag)+' $GLYPH and hatched #'+k2});addCreature(g2,true);addKin(g2)}
+  else if(r<.85&&RETURNED.length){var back=RETURNED.shift();ev('came_back',{g:back,text:'kid '+labelOf(back)+' came back when its parents paired again'})}
+  renderColHud();renderLog();if(Math.random()<.3)renderFamilies();renderHero(false)}
+
+/* ================= HERO ================= */
+var HERO=null,HT0=performance.now(),HSTAGE=0;
+var hc=$('#hero'),hx=hc.getContext('2d');
+function setHero(g,announce){HERO=g;HT0=performance.now();HSTAGE=0;$('#hStage').textContent='Reading genes';setTimeout(function(){$('#hStage').textContent='Thinking'},500);setTimeout(function(){$('#hStage').textContent='Alive'},1300);
+  $('#hTape').innerHTML=g.genome.map(function(b){var c=SP[(b>>5)].hex;return '<i style="background:'+c+';opacity:'+(.4+(b&31)/31*.6).toFixed(2)+'"></i>'}).join('');setHeroCap();renderAnat(g);renderPrints(g);if(announce)toast(labelOf(g)+' hatched: '+g.sp.bin)}
+function setHeroCap(){var g=HERO;if(!g)return;$('#hName').textContent=g.kid?'Kid '+labelOf(g):labelOf(g);$('#hSp').textContent=g.sp.bin+(g.hybrid?' (hybrid)':'');$('#hSp').style.color=g.sp.col[1];$('#hShare').textContent='Found in '+pct(g.species)+' of addresses. A '+g.bytes+'-byte program shaped by '+g.sp.mech.replace('-',' ')+'.';$('#hSha').textContent=g.sha.slice(0,24)+'…';$('#hTh').textContent=g.thoughtText;$('#hTh').title=g.thoughtText;$('#hGen').textContent='Generation '+(g.gen||0)}
+function renderHero(){var e=LOG[0];$('#hTick').textContent=e?ago(e.at)+': '+e.text:'A founder specimen. Paste an address to hatch yours.'}
+function heroFrame(n){if(!HERO||!heroOn)return;var t=(n-HT0)/1000,W=hc.width,H=hc.height;hx.clearRect(0,0,W,H);G.draw(hx,HERO,W,H,t+.01,{frac:REDUCE?1:Math.min(1,t/1.4),font:Math.round(W/52)})}
+$('#addrF').addEventListener('submit',function(e){e.preventDefault();var v=$('#addrIn').value.trim();if(!v){toast('Paste an address first.');return}if(!B58.test(v.split(':')[0]))toast('Not a Solana address, but every string has a glyphling. Hatching anyway.');var g=G.make(v);g.gen=g.gen||0;setHero(g,true);addKin(g)});
+$('#randB').addEventListener('click',function(){var a=fakeAddr(G.rng(G.sha256(String(Math.random()))));$('#addrIn').value=a;var g=G.make(a);setHero(g,true);addKin(g)});
+var KIN=[];function addKin(g){$('#kinL').hidden=false;KIN=[g].concat(KIN.filter(function(x){return x!==g})).slice(0,8);$('#kin').innerHTML=KIN.map(function(x,i){return '<button type="button" data-i="'+i+'"><canvas width="48" height="48"></canvas>'+esc(x.kid?'kid '+labelOf(x):labelOf(x))+'</button>'}).join('');$$('#kin button').forEach(function(b){var g2=KIN[+b.dataset.i];paintMini(b.querySelector('canvas'),g2);b.addEventListener('click',function(){setHero(g2)})})}
+
+/* ================= COLONY CANVAS ================= */
+var cc=$('#col'),cx=cc.getContext('2d'),CRE=[],MEAD=[];
+var MCOL=['#14203d','#162a32','#241a3a','#2a1e1c','#16283a','#1d2a1e','#2a1830','#1a2440','#2a2416'];
+function layoutMeadows(){var W=cc.width,H=cc.height,cols=W<800?2:3,rows=Math.ceil(9/cols);MEAD=[];for(var i=0;i<9;i++){var c=i%cols,r=Math.floor(i/cols);MEAD.push({x:c*W/cols,y:r*H/rows,w:W/cols,h:H/rows,i:i})}}
+function meadowOf(g){return parseInt(g.sha.slice(0,2),16)%9}
+function addCreature(g,fresh){var m=MEAD[meadowOf(g)];if(!m)return;var r=G.rng(g.sha);CRE.push({g:g,m:meadowOf(g),x:m.x+20+r()*(m.w-40),y:m.y+30+r()*(m.h-50),vx:(r()-.5)*.35,vy:(r()-.5)*.25,s:g.kid?40:g.founder?64:52,born:fresh?performance.now():0,ph:r()*6})}
+function removeCreature(g){CRE=CRE.filter(function(c){return c.g!==g})}
+function buildColony(){var dpr=Math.min(2,window.devicePixelRatio||1),rect=cc.getBoundingClientRect();cc.width=Math.round(rect.width*dpr);cc.height=Math.round(rect.height*dpr);layoutMeadows();CRE=[];pool().forEach(function(g){addCreature(g)})}
+var HOVER=null;
+function colFrame(n){if(!colOn)return;var x=cx,W=cc.width,H=cc.height,t=n/1000,dpr=W/cc.getBoundingClientRect().width;x.clearRect(0,0,W,H);
+  MEAD.forEach(function(m){var gr=x.createLinearGradient(m.x,m.y,m.x+m.w,m.y+m.h);gr.addColorStop(0,MCOL[m.i]);gr.addColorStop(1,'#0d1226');x.fillStyle=gr;x.fillRect(m.x+3,m.y+3,m.w-6,m.h-6);x.strokeStyle='rgba(255,255,255,.07)';x.lineWidth=1;x.strokeRect(m.x+3.5,m.y+3.5,m.w-7,m.h-7);
+    for(var k=0;k<26;k++){var gx=m.x+((k*97+m.i*31)%Math.max(1,(m.w-20)))+10,gy=m.y+((k*53+m.i*17)%Math.max(1,(m.h-20)))+10;x.fillStyle='rgba(255,255,255,'+(0.04+0.04*Math.sin(t+k))+')';x.fillRect(gx,gy,2*dpr,2*dpr)}
+    x.fillStyle='rgba(223,227,245,.55)';x.font='600 '+(13*dpr)+'px "Instrument Sans",sans-serif';x.textAlign='left';x.fillText('Meadow '+(m.i+1),m.x+16*dpr,m.y+24*dpr)});
+  CRE.forEach(function(c){var m=MEAD[c.m];if(!REDUCE){c.x+=c.vx*dpr;c.y+=c.vy*dpr;var s=c.s*dpr/2;if(c.x<m.x+s||c.x>m.x+m.w-s)c.vx*=-1;if(c.y<m.y+s+10||c.y>m.y+m.h-s)c.vy*=-1;c.x=Math.max(m.x+s,Math.min(m.x+m.w-s,c.x));c.y=Math.max(m.y+s+10,Math.min(m.y+m.h-s,c.y))}
+    var sz=c.s*dpr,grow=c.born?Math.min(1,(n-c.born)/900):1,bob=Math.sin(t*1.5+c.ph)*2*dpr;var img=sprite(c.g,c.g.kid?96:128);x.globalAlpha=grow;x.drawImage(img,c.x-sz/2,c.y-sz/2+bob,sz*grow,sz*grow);x.globalAlpha=1;
+    if(c===HOVER){x.strokeStyle=c.g.sp.col[1];x.lineWidth=2*dpr;x.beginPath();x.arc(c.x,c.y+bob,sz*.55,0,7);x.stroke();x.fillStyle='#fff';x.font='600 '+(13*dpr)+'px "Instrument Sans",sans-serif';x.textAlign='center';x.fillText((c.g.kid?'Kid ':'')+labelOf(c.g)+', '+c.g.sp.bin,c.x,c.y-sz*.6)}
+    if(c.born&&n-c.born<2500){x.strokeStyle='rgba(255,255,255,'+(1-(n-c.born)/2500)+')';x.lineWidth=2*dpr;x.beginPath();x.arc(c.x,c.y,sz*.5+(n-c.born)/40*dpr,0,7);x.stroke()}});
+  if(!CRE.length){x.fillStyle='rgba(230,232,255,.95)';x.textAlign='center';x.font='800 '+(36*dpr)+'px "Bricolage Grotesque",sans-serif';x.fillText('0 glyphlings alive',W/2,H/2-10*dpr);x.font='500 '+(16*dpr)+'px "Instrument Sans",sans-serif';x.fillStyle='rgba(185,189,230,.92)';x.fillText('Every meadow stays empty until the first wallet holds 5M $GLYPH.',W/2,H/2+24*dpr)}
+  // pairing lines between living kids' parents (latest 6)
+  KIDS.slice(-6).forEach(function(k){var a=CRE.filter(function(c){return c.g===k.parentsG[0]})[0],b=CRE.filter(function(c){return c.g===k.parentsG[1]})[0],kc=CRE.filter(function(c){return c.g===k})[0];if(!a||!b||!kc)return;x.strokeStyle='rgba(255,138,216,.22)';x.setLineDash([4*dpr,6*dpr]);x.lineWidth=1*dpr;x.beginPath();x.moveTo(a.x,a.y);x.lineTo(kc.x,kc.y);x.lineTo(b.x,b.y);x.stroke();x.setLineDash([])})}
+function hit(e){var r=cc.getBoundingClientRect(),dpr=cc.width/r.width,mx=(e.clientX-r.left)*dpr,my=(e.clientY-r.top)*dpr,best=null,bd=1e9;CRE.forEach(function(c){var d=Math.hypot(c.x-mx,c.y-my);if(d<c.s*dpr*.55&&d<bd){bd=d;best=c}});return best}
+cc.addEventListener('mousemove',function(e){HOVER=hit(e)});cc.addEventListener('mouseleave',function(){HOVER=null});cc.addEventListener('click',function(e){var c=hit(e);if(c)openModal(c.g)});
+function renderColHud(){var P=pool(),gens=P.map(function(g){return g.gen||0});$('#cAlive').textContent=P.length;$('#cKids').textContent=KIDS.length;$('#cFam').textContent=WALLETS.filter(function(w){return familySize(w.addr)>0}).length;$('#cGen').textContent=gens.length?Math.max.apply(null,gens):0;var e=LOG[0];$('#cLast').textContent=e?e.text+', '+ago(e.at):'The first wallet to reach 5M $GLYPH hatches the first glyphling.'}
+$('#legend').innerHTML=SP.map(function(s){return '<span><i style="background:'+s.hex+'"></i>'+s.bin+'</span>'}).join('');
+
+/* ================= ANATOMY ================= */
+var anatG=null,anatC=null;
+function renderAnat(g){anatG=g;var out=JSON.stringify(g.output),tr=g.thought.traits;
+  $('#anat').innerHTML='<div class="ast" style="--acc:var(--c3)"><div class="num">1</div><h3>Hash the address</h3><p>sha256 turns the input into 32 bytes. Those bytes are the genes.</p><pre>'+esc(g.input)+'\n\n'+g.sha+'</pre><div class="gtape">'+g.genome.map(function(b){return '<i style="background:var(--c3);opacity:'+(.12+b/255*.88).toFixed(2)+'"></i>'}).join('')+'</div></div>'+
+  '<div class="ast" style="--acc:var(--c5)"><div class="num">2</div><h3>Grow a thought</h3><p>A small pure function: '+esc(g.thought.op)+'. Depth '+tr.depth+', fanout '+tr.fanout+', guards '+tr.guards+', effects '+tr.effects+'.</p><pre>'+esc(g.thoughtText)+'\n\nreturns '+esc(out)+'</pre></div>'+
+  '<div class="ast" style="--acc:var(--c7)"><div class="num">3</div><h3>Write the program</h3><p>Design, thought and a self-copying shell, '+g.bytes+' bytes in all.</p><pre>'+esc(g.source.slice(0,380))+'…</pre></div>'+
+  '<div class="ast" style="--acc:var(--c2)"><div class="num">4</div><h3>Wear it as a body</h3><p>Its own source, drawn along the '+esc(g.sp.mech.replace('-',' '))+' of <em>'+esc(g.sp.bin)+'</em>.</p><canvas id="anatC" width="340" height="340"></canvas></div>';anatC=$('#anatC')}
+function anatFrame(n){if(!anatC||!anatOn)return;var x=anatC.getContext('2d');x.clearRect(0,0,320,320);G.draw(x,anatG,320,320,n/1000,{sparse:520,font:7})}
+
+/* ================= PRINTS ITSELF (quine) ================= */
+var PG=null;
+function hl(src){var out='',re=/("(?:[^"\\]|\\.)*")|(-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)|([\[\]{}])|([\s\S])/g,m;while((m=re.exec(src))){if(m[1]){var kw=/^"(apply|lambda|quote|list|seq|task|var)"$/.test(m[1]);out+='<span class="'+(kw?'kw':'s')+'">'+esc(m[1])+'</span>'}else if(m[2])out+='<span class="n">'+m[2]+'</span>';else if(m[3])out+='<span class="p">'+m[3]+'</span>';else out+=esc(m[0])}return out}
+function renderPrints(g){PG=g;$('#pName').textContent=(g.kid?'Kid '+labelOf(g):labelOf(g))+', '+g.sp.bin;$('#pBytes').textContent=g.bytes+' bytes';$('#pSrc').innerHTML=hl(g.source);$('#pOut').innerHTML='<div class="panel"><p style="color:#c9cdf5">Press <b style="color:#fff">Run the program</b>. Its output should be the exact text on the left, character for character, with the same sha256.</p></div>'}
+$('#runB').addEventListener('click',function(){var g=PG,t0=performance.now();try{var r=G.interpret(JSON.parse(g.source)),out=JSON.stringify(r.output),ok=out===g.source,os=G.sha256(out),ms=(performance.now()-t0).toFixed(2);
+  $('#pOut').innerHTML='<div class="verdict'+(ok?'':' bad')+'"><span class="big">'+(ok?'✓':'✗')+'</span><span>'+(ok?'The output matches the source exactly. It printed itself.':'The output does not match the source.')+'</span></div>'+
+  '<div class="panel" style="margin-top:14px"><div class="kv"><span>steps used</span><b>'+r.ops+' / 64</b><span>time</span><b>'+ms+' ms</b><span>source sha256</span><b>'+g.srcSha+'</b><span>output sha256</span><b>'+os+'</b><span>thought returned</span><b>'+esc(r.log.map(function(l){return l.thought+' → '+JSON.stringify(l.output)}).join(' ; '))+'</b></div></div>'+
+  '<p style="margin:18px 0 8px;color:#9ea3d6;font-size:14px">Output</p><div class="code" style="max-height:200px">'+hl(out)+'</div>'}catch(e){$('#pOut').innerHTML='<div class="verdict bad">'+esc(e.message)+'</div>'}});
+$('#copyRun').addEventListener('click',function(){var g=PG;var code='// Glyphlings quine check: paste into any JS console\n'+G.runThought.toString()+'\n'+G.interpret.toString().replace('function interpret','function interpret')+'\nvar src='+JSON.stringify(g.source)+';\nvar out=JSON.stringify(interpret(JSON.parse(src)).output);\nconsole.log(out===src?"it printed itself ✓":"mismatch ✗");';copy(code)});
+
+/* ================= WALLETS ================= */
+async function holdingsBag(addr){if(!CONFIG.ca)return null;try{var r=await fetch('https://lite-api.jup.ag/ultra/v1/holdings/'+addr);if(!r.ok)throw 0;var j=await r.json();var t=(j.tokens||{})[CONFIG.ca]||[];return t.reduce(function(s,a){return s+(+a.uiAmount||0)},0)}catch(e){return null}}
+var WSEL=null;
+$('#wF').addEventListener('submit',async function(e){e.preventDefault();var a=$('#wIn').value.trim();if(!a){toast('Paste a wallet address first.');return}if(!B58.test(a)){toast('That does not look like a Solana address.');return}
+  var sim=walletOf(a),bag=null,src='typed in';if(CONFIG.ca){$('#wOut').innerHTML='<p class="hint">Reading balance…</p>';bag=await holdingsBag(a);src='on chain'}if(bag==null&&sim){bag=sim.bag;src='preview wallet'}if(bag==null){bag=+$('#wBag').value||0;src='typed in'}else if(!$('#wBag').value)$('#wBag').value=Math.round(bag);
+  if(bag>CONFIG.supply){toast('The whole supply is 1B $GLYPH, so that\u2019s capped at 1B.');bag=CONFIG.supply;$('#wBag').value=bag}
+  if(CONFIG.noGlyphlings.indexOf(a)>=0){$('#wOut').innerHTML='<p class="hint" style="margin-top:16px">This is the pump.fun bonding curve or the PumpSwap pool. It holds tokens for trading, so it never hatches glyphlings.</p>';return}
+  var n=Math.floor(bag/CONFIG.perGlyphling),need=CONFIG.perGlyphling-(bag%CONFIG.perGlyphling),show=Math.min(n,36),kids=sim?KIDS.filter(function(k){return k.wallets.indexOf(a)>=0}):[];
+  var items=[];for(var k=1;k<=Math.max(1,show);k++)items.push(G.make(k===1?a:a+':'+k));
+  $('#wOut').innerHTML='<div class="stats"><div class="stat" style="--acc:var(--c7)"><div class="k">$GLYPH held ('+src+')</div><div class="v">'+fmtM(bag)+'</div><small>'+(bag/CONFIG.supply*100).toFixed(2)+'% of supply</small></div><div class="stat" style="--acc:var(--c3)"><div class="k">Glyphlings</div><div class="v">'+n+'</div></div><div class="stat" style="--acc:var(--c8)"><div class="k">Living kids</div><div class="v">'+kids.length+'</div></div><div class="stat" style="--acc:var(--c2)"><div class="k">Until the next one</div><div class="v">'+fmtM(need)+'</div></div></div>'+
+   (n===0?'<p class="hint" style="margin-top:16px">This wallet holds under 5M, so glyphling #1 is shown but isn\u2019t alive in the colony yet.</p>':'')+
+   '<div class="lings">'+items.map(function(g,i){return '<button type="button" class="ling" data-i="'+i+'" style="--acc:'+g.sp.col[1]+'"><canvas width="170" height="170"></canvas><b>#'+(i+1)+(i===0?' (address)':'')+'</b><small>'+g.sp.bin+'</small></button>'}).join('')+kids.map(function(g,i){return '<button type="button" class="ling" data-k="'+i+'" style="--acc:'+g.sp.col[1]+'"><canvas width="170" height="170"></canvas><b>Kid '+labelOf(g)+'</b><small>Generation '+g.gen+(g.hybrid?', hybrid':'')+'</small></button>'}).join('')+'</div>'+(n>show?'<p class="hint">Showing the first '+show+' of '+n+'.</p>':'');
+  $$('#wOut .ling').forEach(function(b){var g=b.dataset.k!=null?kids[+b.dataset.k]:items[+b.dataset.i];paintMini(b.querySelector('canvas'),g);b.addEventListener('click',function(){openModal(g)})})});
+
+/* ================= BREED ================= */
+var BA=null,BB=null,BK=null,BN=1;
+function slot(id,g){var c=$(id),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);if(g)x.drawImage(sprite(g,300),0,0,c.width,c.height)}
+function pairUp(){var a=$('#bAin').value.trim(),b=$('#bBin').value.trim();if(!a||!b){toast('Give both parents an address.');return}if(a===b){toast('A glyphling can’t pair with itself.');return}BA=G.make(a);BB=G.make(b);BA.gen=BA.gen||0;BB.gen=BB.gen||0;slot('#bA',BA);slot('#bB',BB);BK=G.breed(BA,BB,BN);BK.kid=true;BK.gen=Math.max(BA.gen,BB.gen)+1;BK.parentsG=[BA,BB];slot('#bK',BK);
+  $('#bKn').textContent='Kid '+labelOf(BK)+', generation '+BK.gen;$('#bKs').textContent=BK.sp.bin+(BK.hybrid?', a hybrid of '+BA.sp.bin.split(' ')[0]+' and '+BB.sp.bin.split(' ')[0]:'')}
+$('#bGo').addEventListener('click',function(){BN=1;pairUp()});$('#bNonce').addEventListener('click',function(){BN++;pairUp()});
+$('#bRand').addEventListener('click',function(){var p=pool().filter(function(g){return !g.kid});$('#bAin').value=p[Math.floor(Math.random()*p.length)].input.split(':')[0];$('#bBin').value=fakeAddr(G.rng(G.sha256(String(Math.random()))));BN=1;pairUp()});
+$('#bK').addEventListener('click',function(){if(BK)openModal(BK)});
+
+/* ================= SPECIES ================= */
+var spCanv=[];
+var TX={plexa:'#2a1d00',arbor:'#03281a',anulus:'#032a2e',nautilus:'#2a0f00'};
+function renderSpecies(){var alive=SP.map(function(){return 0});pool().forEach(function(g){alive[g.species]++});
+  if(!spCanv.length){$('#spGrid').innerHTML=SP.map(function(s,i){return '<article class="spc" style="--acc:'+s.hex+';--tx:'+(TX[s.key]||'#fff')+'"><canvas width="320" height="320" data-sp="'+i+'" aria-label="'+s.bin+'"></canvas><h3>'+s.bin+'</h3><div class="mech">'+s.mech.replace('-',' ')+'</div><p>'+s.blurb+'</p><code>'+esc(s.rule)+'</code><div class="nums"><span><b data-share="'+i+'">'+pct(i)+'</b>of addresses</span><span><b data-alive="'+i+'">0</b>alive</span><span><b data-born="'+i+'">0</b>born</span></div></article>'}).join('');spCanv=$$('#spGrid canvas');spCanv.forEach(function(c){c.addEventListener('click',function(){openModal(FOUNDERS[+c.dataset.sp])})})}
+  SP.forEach(function(s,i){$('[data-share="'+i+'"]').textContent=pct(i);$('[data-alive="'+i+'"]').textContent=alive[i];$('[data-born="'+i+'"]').textContent=BORN[i]});
+  var mxv=Math.max.apply(null,MX.map(function(r){return Math.max.apply(null,r)}).concat([1]));$('#mx').innerHTML='<tr><th></th>'+SP.map(function(s){return '<th style="color:'+s.hex+'" title="'+s.bin+'">'+s.bin.slice(0,3)+'</th>'}).join('')+'</tr>'+SP.map(function(s,i){return '<tr><th style="color:'+s.hex+';text-align:right;padding-right:6px" title="'+s.bin+'">'+s.bin.slice(0,3)+'</th>'+SP.map(function(t,j){var v=MX[i][j],a=v/mxv;return '<td title="'+s.bin+' with '+t.bin+': '+v+' kids" style="background:'+(i===j?s.hex:'rgba(58,76,240,'+(0.06+a*.85).toFixed(2)+')')+';color:'+(a>.5||i===j?'#fff':'var(--ink)')+'">'+v+'</td>'}).join('')+'</tr>'}).join('');
+  $('#rules').innerHTML=SP.map(function(s){return '<li><span><b style="color:'+s.hex+'">'+s.bin+'</b><br><code>'+esc(s.rule)+'</code></span></li>'}).join('')}
+function spFrame(n){if(!spOn)return;spCanv.forEach(function(c,i){var x=c.getContext('2d');x.clearRect(0,0,300,300);G.draw(x,FOUNDERS[i],300,300,n/1000,{sparse:420,font:7})})}
+
+/* ================= FAMILIES ================= */
+var FSORT='size',FPAGE=0,FSEL=null;
+function famList(){return WALLETS.map(function(w){return {w:w,size:familySize(w.addr),kids:KIDS.filter(function(k){return k.wallets.indexOf(w.addr)>=0}).length}}).filter(function(f){return f.size>0}).sort(function(a,b){return FSORT==='size'?b.size-a.size||b.w.earned-a.w.earned:FSORT==='earned'?b.w.earned-a.w.earned:a.w.since-b.w.since})}
+var RC=['var(--c1)','var(--c7)','var(--c4)','var(--c2)','var(--c6)','var(--c3)','var(--c5)','var(--c8)'];
+function renderFamilies(){var L=famList(),per=8,pages=Math.max(1,Math.ceil(L.length/per));FPAGE=Math.min(FPAGE,pages-1);$('#fCount').textContent=L.length+' families';$('#fPage').textContent='Page '+(FPAGE+1)+' of '+pages;
+  $('#fBody').innerHTML=(L.length?'':'<tr><td colspan="4" style="padding:28px 10px;color:var(--ink3)">0 families so far. The leaderboard fills as wallets reach 5M $GLYPH.</td></tr>')+L.slice(FPAGE*per,FPAGE*per+per).map(function(f,i){var r=FPAGE*per+i+1;return '<tr class="click'+(FSEL===f.w.addr?' sel':'')+'" data-a="'+f.w.addr+'"><td><span class="rank" style="background:'+RC[(r-1)%8]+'">'+r+'</span></td><td class="mono">'+short(f.w.addr)+'</td><td><b style="font:800 20px var(--display)">'+f.size+'</b> <span class="small">'+f.w.lings.length+' glyphlings, '+f.kids+' kids</span></td><td class="hm mono">'+f.w.earned.toFixed(4)+' SOL</td></tr>'}).join('');
+  $$('#fBody tr').forEach(function(tr){tr.addEventListener('click',function(){FSEL=tr.dataset.a;renderFamilies()})});if(!FSEL&&L[0])FSEL=L[0].w.addr;famDetail();poolBox()}
+function famDetail(){var w=walletOf(FSEL);if(!w){$('#fDetail').innerHTML='<h3>No families yet</h3><p class="small" style="margin-top:8px;font-size:15px">A family forms when a wallet holds 5M $GLYPH. Its glyphlings and their living kids all count toward its share of each hourly pool.</p>';return}var kids=KIDS.filter(function(k){return k.wallets.indexOf(w.addr)>=0}),size=familySize(w.addr),tot=totalFam();
+  $('#fDetail').innerHTML='<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div><p class="small">Family of</p><b class="mono" style="font-size:20px">'+short(w.addr)+'</b><p class="small" style="margin-top:4px">'+w.lings.length+' glyphlings and '+kids.length+' living kids</p></div><div style="text-align:right"><p class="small">Share of this hour</p><b style="font:800 40px/1 var(--display);color:var(--c3)">'+(size/Math.max(tot,1)*100).toFixed(1)+'%</b></div></div>'}
+function poolBox(){$('#poolV').textContent='0 SOL';$('#poolS').textContent='The first hour starts at launch';$('#poolT').textContent='after hour 1';$('#poolM').style.width='0%';calc()}
+function calc(){var n=Math.max(0,+$('#calcN').value||0),tot=totalFam()+n;$('#calcO').textContent=n?(n/Math.max(tot,1)*100).toFixed(1)+'% of each hourly pool right now':'0% of the pool'}
+$('#calcN').addEventListener('input',calc);
+$$('#fTabs button').forEach(function(b){b.addEventListener('click',function(){FSORT=b.dataset.s;FPAGE=0;$$('#fTabs button').forEach(function(o){o.setAttribute('aria-pressed',o===b)});renderFamilies()})});
+$('#fPrev').addEventListener('click',function(){FPAGE=Math.max(0,FPAGE-1);renderFamilies()});$('#fNext').addEventListener('click',function(){FPAGE++;renderFamilies()});
+setInterval(function(){if(famOn)poolBox()},1000);
+
+/* ================= HOURS ================= */
+function verifyCopies(){var all=pool(),bad=0;all.forEach(function(g){var out=JSON.stringify(G.interpret(JSON.parse(g.source)).output);if(out!==g.source||G.sha256(out)!==g.srcSha)bad++});return {checked:all.length,bad:bad}}
+function renderHours(){var v=verifyCopies();
+  $('#hStats').innerHTML='<div class="stat" style="--acc:var(--c3)"><div class="k">Copies checked</div><div class="v">'+v.checked+'</div></div><div class="stat" style="--acc:var(--c2)"><div class="k">Copies that failed</div><div class="v">'+v.bad+'</div></div><div class="stat" style="--acc:var(--c7)"><div class="k">Hours paid</div><div class="v">0</div></div><div class="stat" style="--acc:var(--c8)"><div class="k">Paid to families</div><div class="v">0 SOL</div></div>';
+  var c=$('#hChart'),x=c.getContext('2d'),W=c.width,H=c.height;x.clearRect(0,0,W,H);x.strokeStyle='#dfe1ee';x.lineWidth=1;for(var g2=0;g2<=4;g2++){var y=20+(H-50)*g2/4;x.beginPath();x.moveTo(40,y);x.lineTo(W-10,y);x.stroke()}
+  x.fillStyle='#14163a';x.textAlign='center';x.font='800 30px "Bricolage Grotesque",sans-serif';x.fillText('No hours paid yet',W/2,H/2-6);x.fillStyle='#8b8eab';x.font='500 16px "Instrument Sans",sans-serif';x.fillText('Each hour\u2019s pool and copy check will appear here, starting with hour 1.',W/2,H/2+24)}
+
+/* ================= LOG ================= */
+var LT='all',TC={born:'var(--c2)',child:'var(--c8)',returned:'#8b8eab',came_back:'var(--c6)'},TN={born:'Born',child:'Kid',returned:'Returned',came_back:'Came back'};
+function renderLog(){if(!logOn&&LOGDRAWN)return;LOGDRAWN=true;var L=LOG.filter(function(e){return LT==='all'||e.type===LT}).slice(0,60);
+  $('#feed').innerHTML=L.length?L.map(function(e,i){return '<div class="ev"><canvas width="104" height="104" data-i="'+i+'"></canvas><div><span class="ty" style="background:'+TC[e.type]+'">'+TN[e.type]+'</span>'+esc(e.text)+'<br><small>'+esc(e.g.sp.bin)+', sha256 '+e.g.sha.slice(0,12)+'…</small></div><small>'+ago(e.at)+'</small></div>'}).join(''):'<p class="hint" style="padding:22px 0">Nothing has happened in the colony yet. Births, kids and returns will show up here as they happen.</p>';
+  $$('#feed canvas').forEach(function(c){var e=L[+c.dataset.i];paintMini(c,e.g);c.style.cursor='pointer';c.addEventListener('click',function(){openModal(e.g)})})}
+var LOGDRAWN=false;
+$$('#lTabs button').forEach(function(b){b.addEventListener('click',function(){LT=b.dataset.t;$$('#lTabs button').forEach(function(o){o.setAttribute('aria-pressed',o===b)});LOGDRAWN=false;renderLog()})});
+
+/* ================= SOURCE ================= */
+$('#genSpec').innerHTML=hl(JSON.stringify({generator:{glyphling_1:'address',glyphling_k:'address:k',hash:'sha256(input)',genome:'32 bytes → thought, design, motion',name:'G- + first 8 characters of the input',templates:13,species:8,limits:{ops:64}},token:{launchpad:'pump.fun',supply:'1,000,000,000',decimals:6,per_glyphling:'5,000,000 (0.5%)',max_glyphlings:200,excluded:'bonding curve + PumpSwap pool'},copy:'every 1 h · output must hash to the same sha256',kids:'gene A + gene B · 1 tx',payout:'50% of pump.fun creator fees, in SOL, every 1 h, split by family size'},null,2));
+$('#interp').textContent=G.interpret.toString()+'\n\n'+G.runThought.toString();
+$('#founders').innerHTML=FOUNDERS.map(function(g,i){return '<button type="button" class="ling" data-i="'+i+'" style="--acc:'+g.sp.col[1]+';background:var(--stage2)"><canvas width="130" height="130"></canvas><b>Founder '+(i+1)+'</b><small>'+g.sp.bin+'</small></button>'}).join('');
+$$('#founders .ling').forEach(function(b){var g=FOUNDERS[+b.dataset.i];paintMini(b.querySelector('canvas'),g);b.addEventListener('click',function(){openModal(g)})});
+
+/* ================= REBUILD ================= */
+var RB=null,rbc=$('#rbC');
+$('#rbF').addEventListener('submit',function(e){e.preventDefault();var inp=$('#rbIn').value.trim(),exp=$('#rbSha').value.trim().toLowerCase();if(!inp){toast('Paste an input to rebuild.');return}
+  var h=G.sha256(inp),g=G.make(inp),r=G.interpret(JSON.parse(g.source)),ok=JSON.stringify(r.output)===g.source;RB=g;
+  var match=exp?(exp===h||exp===g.srcSha||(exp.length>=8&&(h.indexOf(exp)===0||g.srcSha.indexOf(exp)===0))):null;
+  $('#rbOut').innerHTML='<div class="kv"><span>Input</span><b>'+esc(inp)+'</b><span>sha256(input)</span><b>'+h+'</b><span>Species</span><b>'+g.sp.bin+'</b><span>Thought</span><b>'+esc(g.thoughtText)+'</b><span>Source sha256</span><b>'+g.srcSha+'</b><span>Quine check</span><b>'+(ok?'Prints itself':'Does not print itself')+'</b></div>'+(match===null?'':'<div class="verdict'+(match?'':' bad')+'" style="margin-top:14px"><span class="big">'+(match?'✓':'✗')+'</span><span>'+(match?'It matches the sha256 you were shown.':'It does not match the sha256 you pasted. Check the input for typos.')+'</span></div>')});
+function rbFrame(n){if(!RB||!rbOn)return;var x=rbc.getContext('2d');x.clearRect(0,0,600,600);G.draw(x,RB,600,600,n/1000,{font:11})}
+
+/* ================= MODAL ================= */
+var MG=null,MT0=0,mc=$('#mC');
+function openModal(g){MG=g;MT0=performance.now();$('#mTape').innerHTML=g.genome.map(function(b){return '<i style="background:'+SP[b>>5].hex+';opacity:'+(.35+(b&31)/31*.65).toFixed(2)+'"></i>'}).join('');
+  var par=g.parentsG?'<span>Parents</span><b>'+g.parentsG.map(function(p){return (p.kid?'Kid ':'')+esc(labelOf(p))}).join(' and ')+'</b>':'';
+  $('#mBody').innerHTML='<p class="small">'+(g.founder?'Founder '+g.fid.slice(1):g.kid?'Kid, generation '+g.gen:'Glyphling')+'</p><h3 id="mName" style="font-size:44px;line-height:.95;margin:6px 0 8px">'+esc(g.kid?'Kid '+labelOf(g):g.founder?'Founder '+g.fid.slice(1):labelOf(g))+'</h3><div style="font:600 20px var(--display);font-style:italic;color:'+g.sp.hex+'">'+g.sp.bin+(g.hybrid?' (hybrid)':'')+'</div><p style="color:var(--ink2);margin:10px 0 20px">'+g.sp.blurb+' Found in '+pct(g.species)+' of addresses.</p>'+
+   '<div class="kv"><span>Input</span><b>'+esc(g.input)+'</b><span>sha256</span><b>'+g.sha+'</b><span>Shape</span><b>'+g.sp.mech+'</b><span>Program</span><b>'+g.bytes+' bytes</b><span>Thought</span><b>'+esc(g.thoughtText)+'</b><span>Returns</span><b>'+esc(JSON.stringify(g.output))+'</b>'+par+(g.born?'<span>Born</span><b>'+ago(g.born)+'</b>':'')+'</div>'+
+   '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:24px"><button class="btn sm" type="button" id="mRun">Run its program</button><button class="btn line sm" type="button" id="mHero">Show at the top</button><button class="btn line sm" type="button" id="mRb">Rebuild it</button><button class="btn line sm" type="button" id="mCp">Copy source</button></div>';
+  $('#mRun').onclick=function(){close();renderPrints(g);document.getElementById('prints').scrollIntoView({behavior:'smooth'});setTimeout(function(){$('#runB').click()},500)};
+  $('#mHero').onclick=function(){close();setHero(g);window.scrollTo({top:0,behavior:'smooth'})};
+  $('#mRb').onclick=function(){close();$('#rbIn').value=g.input;$('#rbSha').value=g.sha;document.getElementById('rebuild').scrollIntoView({behavior:'smooth'});setTimeout(function(){$('#rbF').requestSubmit()},400)};
+  $('#mCp').onclick=function(){copy(g.source)};$('#ov').classList.add('on');document.body.style.overflow='hidden'}
+function close(){$('#ov').classList.remove('on');document.body.style.overflow='';MG=null}
+$('#mX').addEventListener('click',close);$('#ov').addEventListener('click',function(e){if(e.target.id==='ov')close()});document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});
+function modalFrame(n){if(!MG)return;var x=mc.getContext('2d');x.clearRect(0,0,640,640);G.draw(x,MG,640,640,(n-MT0)/1000,{font:12,frac:REDUCE?1:Math.min(1,(n-MT0)/900)})}
+
+/* ================= LOGO / LINKS / FAQ ================= */
+(function(){var c=$('#logo'),x=c.getContext('2d');x.fillStyle='#0d1226';x.fillRect(0,0,68,68);G.draw(x,FOUNDERS[7],68,68,1,{sparse:240,font:5});try{$('#fav').href=c.toDataURL()}catch(e){}})();
+function wire(sel,url,msg){var e=$(sel);if(!e)return;if(url){e.href=url;e.target='_blank';e.rel='noopener'}else e.addEventListener('click',function(ev){ev.preventDefault();toast(msg)})}
+['#xTop','#xCA','#xF'].forEach(function(s){wire(s,CONFIG.xUrl,'X account drops soon.')});wire('#buyA',CONFIG.buyUrl,'$GLYPH goes live at launch.');wire('#chA',CONFIG.chartUrl,'Chart goes live at launch.');
+
+
+var FAQ=[['How does $GLYPH fit pump.fun?','It\u2019s a standard pump.fun launch: 1,000,000,000 tokens with 6 decimals. About 800M are sold along the bonding curve, and when it fills, about 200M go with the raised SOL into a PumpSwap pool and the LP is burned. 5M $GLYPH is 0.5% of the supply, so at most 200 glyphlings can ever be alive. The bonding curve and the pool never hatch glyphlings.'],['Where do the hourly payouts come from?','pump.fun pays the creator a fee on every $GLYPH trade, on the bonding curve and after graduation on PumpSwap, in SOL. Every hour, half of what\u2019s claimed goes to families, split by family size. The exact fee rate is set by pump.fun\u2019s own fee tiers, and payouts depend on real trading volume.'],['What is a glyphling?','A tiny program grown from sha256 of a Solana address. Its genes decide a thought (a small pure function), a species, and a body. The body is drawn with the characters of its own source code, flowing along a mathematical shape.'],['What does "prints itself" mean?','Each glyphling is a quine: run it in the clean interpreter and its output is its own full source, byte for byte. The Quine section runs it live, and you can copy the check into any JavaScript console.'],['How many glyphlings do I get?','One for every 5M $GLYPH you hold. #1 is your address, #2 is address:2, and so on. Every address has a glyphling even with zero tokens, but only held glyphlings live in the colony.'],['How do kids and families work?','Two glyphlings pair and a kid is born from gene A + gene B in one transaction. Your family is your glyphlings plus your living kids. Every hour, 50% of the creator fees are split across families by size.'],['Where is the contract address?','It\u2019s posted on our X account at launch. Always copy it from there.'],['Why is the colony empty?','Everything starts at zero. The first wallet to hold 5M $GLYPH hatches the first glyphling, and the colony, families, hours and log fill in from there.'],['Can I check it myself?','Yes. The generator and interpreter are on this page. Use Rebuild to regrow any glyphling from its input and compare the sha256.']];
+$('#faq').innerHTML='<h2 style="margin-bottom:16px">Questions people ask</h2>'+FAQ.map(function(f,i){return '<details'+(i===0?' open':'')+'><summary>'+f[0]+'</summary><p>'+f[1]+'</p></details>'}).join('');
+
+/* ================= START ================= */
+var heroOn=true,colOn=false,anatOn=false,spOn=false,famOn=false,logOn=false,rbOn=false;
+function watch(el,fn){try{new IntersectionObserver(function(e){fn(e[0].isIntersecting)}).observe(el)}catch(e){fn(true)}}
+watch($('#heroBox'),function(v){heroOn=v});watch(cc,function(v){colOn=v});watch($('#anatomy'),function(v){anatOn=v});watch($('#spGrid'),function(v){spOn=v});watch($('#families'),function(v){famOn=v});watch($('#log'),function(v){logOn=v;if(v){LOGDRAWN=false;renderLog()}});watch(rbc,function(v){rbOn=v});
+buildColony();var rsz;window.addEventListener('resize',function(){clearTimeout(rsz);rsz=setTimeout(buildColony,200)});
+setHero(FOUNDERS[2]);(function(){var seen={},pick=[];})();
+renderColHud();renderLog();renderSpecies();renderFamilies();renderHours();renderHero();
+$('#rbIn').value=FOUNDERS[0].input;$('#rbSha').value=FOUNDERS[0].sha;$('#rbF').requestSubmit();
+$('#bAin').value=FOUNDERS[2].input;$('#bBin').value=FOUNDERS[4].input;pairUp();
+setInterval(function(){if(spOn)renderSpecies()},9000);setInterval(function(){if(document.querySelector('#hours').getBoundingClientRect().top<innerHeight)renderHours()},15000);
+try{var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.05});$$('.reveal').forEach(function(el){io.observe(el)})}catch(e){$$('.reveal').forEach(function(el){el.classList.add('in')})}
+var last=0;(function loop(n){if(n-last>33){heroFrame(n);colFrame(n);if(n%3<1.5||true){anatFrame(n);rbFrame(n)}modalFrame(n);last=n}if(Math.floor(n/80)%1===0)spFrameT(n);requestAnimationFrame(loop)})(0);
+var lastSp=0;function spFrameT(n){if(n-lastSp>80){spFrame(n);lastSp=n}}
+window.__gl={G:G,openModal:openModal,setHero:setHero,pool:pool};
+})();
+</script></body></html>
